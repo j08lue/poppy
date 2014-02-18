@@ -32,12 +32,13 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     return fluxbudget
 
 
-def fluxbudget_UESVNS(ds,mask):
+def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None):
     """Integrate horizontal flux using UES and VNS variables"""
     dz = ds.variables['dz'][:]/100.
     tarea = ds.variables['TAREA'][:]/1e4
+    if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(len(dz)):
+    for k in xrange(kza,kzo):
         uflux = np.ma.filled(ds.variables['UES'][0,k],0)
         uflux *= tarea
         uflux *= dz[k]
@@ -48,13 +49,14 @@ def fluxbudget_UESVNS(ds,mask):
     return fluxbudget
 
 
-def fluxbudget_bolus_visop(ds,mask,varn,S0=34.8):
+def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     """Compute flux of `varn` into region `mask` due to eddy (bolus) velocity"""
     dxt = ds.variables['DXT'][:]/100.
     dyt = ds.variables['DYT'][:]/100.
     dz = ds.variables['dz'][:]/100.
+    if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(len(dz)):
+    for k in xrange(kza,kzo):
         # get bolus velocity
         uflux = np.ma.filled(ds.variables['UISOP'][0,k]/100.,0) # m s-1
         vflux = np.ma.filled(ds.variables['VISOP'][0,k]/100.,0) # m s-1
@@ -86,13 +88,14 @@ def fluxbudget_bolus_visop(ds,mask,varn,S0=34.8):
 fluxbudget_bolus = fluxbudget_bolus_visop
 
 
-def fluxbudget_diffusion(ds,mask,varn,S0=34.8):
+def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     """Compute flux of `varn` into region `mask` due to diffusion"""
     dxt = ds.variables['DXT'][:]/100.
     dyt = ds.variables['DYT'][:]/100.
     dz = ds.variables['dz'][:]/100.
+    if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(len(dz)):
+    for k in xrange(kza,kzo):
         # get scalar data
         if varn == 'heat':
             scalar = np.ma.filled(ds.variables['TEMP'][0,k],0)
@@ -123,13 +126,14 @@ def fluxbudget_diffusion(ds,mask,varn,S0=34.8):
     return fluxbudget
 
 
-def transport_divergence(ds,mask):
+def transport_divergence(ds,mask,kza=0,kzo=None):
     dxu = ds.variables['DXU'][:]/100.
     dyu = ds.variables['DYU'][:]/100.
     tarea = ds.variables['TAREA'][:]/1e4
     dz = ds.variables['dz'][:]/100.    
+    if kzo is None: kzo = len(dz)
     transport_divergence = 0.
-    for k in xrange(len(dz)):
+    for k in xrange(kza,kzo):
         uflux = ds.variables['UES'][0,k]
         uflux *= dyu
         uflux *= dz[k]
