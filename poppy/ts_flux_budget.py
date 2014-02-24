@@ -8,8 +8,17 @@ def _fill0(a):
     return np.ma.filled(a,0.)
 
 
+_warned_about_units = False
+def _warn_virtual_salt_flux_units():
+    global _warned_about_units
+    if not _warned_about_units:
+        print('Warning: Output units are kg FW s-1!')
+        _warned_about_units = True
+
+
 def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     """Integrate horizontal flux using VVEL*SCALAR"""
+    _warn_virtual_salt_flux_units()
     dsvar = ds.variables
     dxu = dsvar['DXU'][:] * 1e-2
     dyu = dsvar['DYU'][:] * 1e-2
@@ -39,8 +48,10 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     return fluxbudget
 
 
-def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None,t=0):
+def fluxbudget_UESVNS(ds,mask,varn='salt',kza=0,kzo=None,t=0):
     """Integrate horizontal flux using UES and VNS variables"""
+    _warn_virtual_salt_flux_units()
+
     dsvar = ds.variables
     dz = dsvar['dz'][:] * 1e-2
     tarea = dsvar['UAREA'][:] * 1e-4
@@ -54,12 +65,14 @@ def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None,t=0):
         vflux *= tarea
         vflux *= dz[k]
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
-    fluxbudget *= salt_flux_to_fw_flux(ds)
+    if varn == 'salt':
+        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
 def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     """Compute flux of `varn` into region `mask` due to eddy (bolus) velocity"""
+    _warn_virtual_salt_flux_units()
     dsvar = ds.variables
     dxt = dsvar['DXT'][:] * 1e-2
     dyt = dsvar['DYT'][:] * 1e-2
@@ -99,6 +112,7 @@ fluxbudget_bolus = fluxbudget_bolus_visop
 
 def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     """Compute flux of `varn` into region `mask` due to diffusion"""
+    _warn_virtual_salt_flux_units()
     dsvar = ds.variables
     dxt = dsvar['DXT'][:] * 1e-2
     dyt = dsvar['DYT'][:] * 1e-2
@@ -137,6 +151,7 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
 
 
 def fluxbudget_bolus_advection_tendency(ds,mask,varn,t=0):
+    _warn_virtual_salt_flux_units()
     dsvar = ds.variables
     if varn == 'heat':
         integrand = _fill0(dsvar['ADVT_ISOP'][t][mask]) * 1e-2
@@ -151,7 +166,12 @@ def fluxbudget_bolus_advection_tendency(ds,mask,varn,t=0):
     return integral
 
 
-def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
+def transport_divergence(ds,mask,varn='salt',kza=0,kzo=None,t=0):
+    _warn_virtual_salt_flux_units()
+    if varn == 'heat':
+        uvar,vvar = 'UET','VNT'
+    elif varn == 'salt':
+        uvar,vvar = 'UES','VNS'
     dsvar = ds.variables
     dxu = dsvar['DXU'][:] * 1e-2
     dyu = dsvar['DYU'][:] * 1e-2
@@ -160,11 +180,11 @@ def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
     for k in xrange(kza,kzo):
-        uflux = _fill0(dsvar['UES'][t,k])
+        uflux = _fill0(dsvar[uvar][t,k])
         uflux *= dyu
         uflux *= dz[k]
         uflux *= mask
-        vflux = _fill0(dsvar['VNS'][t,k])
+        vflux = _fill0(dsvar[vvar][t,k])
         vflux *= dxu
         vflux *= dz[k]
         vflux *= mask
@@ -175,15 +195,21 @@ def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
     return transport_divergence
 
 
-def transport_divergence_from_vertical(ds,mask,kza=0,kzo=None,t=0):
+def transport_divergence_from_vertical(ds,mask,varn='salt',kza=0,kzo=None,t=0):
+    _warn_virtual_salt_flux_units()
+    if varn == 'heat':
+        wvar = 'WTT'
+    elif varn == 'salt':
+        wvar = 'WTS'
     dsvar = ds.variables
     dz = dsvar['dz'][:] * 1e-2
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
     for k in xrange(kza,kzo):
-        wflux = _fill0(dsvar['WTS'][t,k][mask])
+        wflux = _fill0(dsvar[wvar][t,k][mask])
         wflux *= dz[k]
         wflux *= dsvar['TAREA'][:][mask] * 1e-4
         transport_divergence += np.sum(wflux)
-    transport_divergence *= salt_flux_to_fw_flux(ds)
+    if varn == 'salt':
+        transport_divergence *= salt_flux_to_fw_flux(ds)
     return transport_divergence
