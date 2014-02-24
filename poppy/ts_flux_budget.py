@@ -34,17 +34,18 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     return fluxbudget
 
 
-def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None):
+def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None,t=0):
     """Integrate horizontal flux using UES and VNS variables"""
-    dz = ds.variables['dz'][:]/100.
-    tarea = ds.variables['TAREA'][:]/1e4
+    dsvar = ds.variables
+    dz = dsvar['dz'][:] * 1e-2
+    tarea = dsvar['TAREA'][:] * 1e-4
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
     for k in xrange(kza,kzo):
-        uflux = np.ma.filled(ds.variables['UES'][0,k],0)
+        uflux = np.ma.filled(dsvar['UES'][t,k],0)
         uflux *= tarea
         uflux *= dz[k]
-        vflux = np.ma.filled(ds.variables['VNS'][0,k],0)
+        vflux = np.ma.filled(dsvar['VNS'][t,k],0)
         vflux *= tarea
         vflux *= dz[k]
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
@@ -123,7 +124,7 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     return fluxbudget
 
 
-def fluxbudget_diffusion_advection_tendency(ds,mask,varn,t=0):
+def fluxbudget_bolus_advection_tendency(ds,mask,varn,t=0):
     dsvar = ds.variables
     if varn == 'heat':
         integrand = _fill0(dsvar['ADVT_ISOP'][t][mask]) * 1e-2
