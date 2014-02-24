@@ -5,7 +5,8 @@ from oceanpy.stats import central_differences
 def _fill0(a):
     return np.ma.filled(a,0)
 
-def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8):
+
+def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     """Integrate horizontal flux using VVEL*SCALAR"""
     dxu = ds.variables['DXU'][:]/100.
     dyu = ds.variables['DYU'][:]/100.
@@ -13,21 +14,21 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
     for k in xrange(kza,kzo):
-        uflux = np.ma.filled(ds.variables['UVEL'][0,k]/100.,0)
+        uflux = np.ma.filled(ds.variables['UVEL'][t,k]/100.,0)
         uflux *= dyu
         uflux *= dz[k]
-        vflux = np.ma.filled(ds.variables['VVEL'][0,k]/100.,0)
+        vflux = np.ma.filled(ds.variables['VVEL'][t,k]/100.,0)
         vflux *= dxu
         vflux *= dz[k]
         if not varn:
             scalar = None
         elif varn == 'heat':
-            scalar = np.ma.filled(ds.variables['TEMP'][0,k],0)
+            scalar = np.ma.filled(ds.variables['TEMP'][t,k],0)
         elif varn == 'salt':
-            scalar = np.ma.filled(ds.variables['SALT'][0,k],0)
+            scalar = np.ma.filled(ds.variables['SALT'][t,k],0)
         elif varn == 'freshwater':
-            scalar = (S0 - np.ma.filled(ds.variables['SALT'][0,k],0)) / S0
-            scalar *= np.ma.filled(ds.variables['VVEL'][0,k],0)/100.
+            scalar = (S0 - np.ma.filled(ds.variables['SALT'][t,k],0)) / S0
+            scalar *= np.ma.filled(ds.variables['VVEL'][t,k],0)/100.
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=scalar,mask=mask,grid='ArakawaB')
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
