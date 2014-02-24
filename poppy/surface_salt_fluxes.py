@@ -10,13 +10,13 @@ frazil ice formation which occurs within the ocean model!
 
 This net surface flux can be broken into components as follows:
 SFWF - QFLUX/latent_heat_fusion/1.e4   =  
-    PREC_F + EVAP+F + ROFF_F + IOFF_F + MELT_F
+    PREC_F + EVAP_F + ROFF_F + IOFF_F + MELT_F
     + SALT_F*(sflux_factor/salinity_factor)
     - QFLUX/latent_heat_fusion/1.e4
     + (any weak or strong salinity restoring)
 
 
-MELT_F represents any FW flux computed by the ice model and sent to the ocean (associated with ice melt/growth), while SALT_F represents any SALT flux computed by the ice model and sent to the ocean (associated with the fact that ice melt/growth requires that salt be added/removed from the ocean because ice has a constant salinity of ~4 psu!). This salt flux must of course be converted to appropriate units; in the above equation, it is converted from (kg SALT/^2/s) to (kg FW/m^2/s). 
+MELT_F represents any FW flux computed by the ice model and sent to the ocean (associated with ice melt/growth), while SALT_F represents any SALT flux computed by the ice model and sent to the ocean (associated with the fact that ice melt/growth requires that salt be added/removed from the ocean because ice has a constant salinity of ~4 psu!). This salt flux must of course be converted to appropriate units; in the above equation, it is converted from (kg SALT/m^2/s) to (kg FW/m^2/s). 
 
 Note that we don't generally save salinity restoring fluxes, so any difference between the RHS and LHS of the above equation computed from POP output fields might be attributable to salinity restoring.
 
@@ -34,6 +34,7 @@ MELT_F(:,:,iblock)+ROFF_F(:,:,iblock)+IOFF_F(:,:,iblock))*salinity_factor &
 For guidance on conversion of FW flux to virtual salt flux, etc, refer to POP_ConstantsMod.F90
 """
 import netCDF4
+
 
 def net_salinity_forcing(ncfile):
     """
@@ -72,3 +73,6 @@ def salinity_restoring(ncfile):
             return _get_data(ds)
 
 
+def salt_flux_to_fw_flux(ds,value):
+    dsvar = ds.variables
+    return value*(dsvar['sflux_factor'][0]/dsvar['salinity_factor'][0])
