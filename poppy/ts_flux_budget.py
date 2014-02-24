@@ -80,10 +80,7 @@ def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8):
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
-    elif varn == 'salt':
-        fluxbudget *= 1e-6 # Sv PPT
     return fluxbudget
-
 
 fluxbudget_bolus = fluxbudget_bolus_visop
 
@@ -121,8 +118,6 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     # convert to right units
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
-    elif varn == 'salt':
-        fluxbudget *= 1e-6 # Sv PPT
     return fluxbudget
 
 
