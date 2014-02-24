@@ -2,6 +2,8 @@ import numpy as np
 from oceanpy.fluxbudget import budget_over_region_2D
 from oceanpy.stats import central_differences
 
+def _fill0(a):
+    return np.ma.filled(a,0)
 
 def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     """Integrate horizontal flux using VVEL*SCALAR"""
@@ -85,7 +87,7 @@ def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8):
 fluxbudget_bolus = fluxbudget_bolus_visop
 
 
-def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
+def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     """Compute flux of `varn` into region `mask` due to diffusion"""
     dxt = ds.variables['DXT'][:]/100.
     dyt = ds.variables['DYT'][:]/100.
@@ -95,16 +97,16 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     for k in xrange(kza,kzo):
         # get scalar data
         if varn == 'heat':
-            scalar = np.ma.filled(ds.variables['TEMP'][0,k],0)
+            scalar = np.ma.filled(ds.variables['TEMP'][t,k],0)
         elif varn == 'salt':
-            scalar = np.ma.filled(ds.variables['SALT'][0,k],0)
+            scalar = np.ma.filled(ds.variables['SALT'][t,k],0)
         elif varn == 'freshwater':
-            scalar = (S0 - np.ma.filled(ds.variables['SALT'][0,k],0)) / S0
+            scalar = (S0 - np.ma.filled(ds.variables['SALT'][t,k],0)) / S0
         # get gradient
         uflux = central_differences(scalar,dxt,axis=1) # [scalar] m-1
         vflux = central_differences(scalar,dyt,axis=0) # [scalar] m-1
         # multiply gradient by diffusion coefficient
-        kappa = np.ma.filled(ds.variables['KAPPA_ISOP'][0,k]/1e4,0) # m2 s-1
+        kappa = np.ma.filled(ds.variables['KAPPA_ISOP'][t,k]/1e4,0) # m2 s-1
         uflux *= kappa
         vflux *= kappa
         # multiply by horizontal grid spacing
@@ -121,7 +123,19 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
     return fluxbudget
 
 
-def transport_divergence(ds,mask,kza=0,kzo=None):
+def fluxbudget_diffusion_advection_tendency(ds,mask,varn,t=0):
+    dsvar = ds.variables
+    if varn == 'heat':
+        integrand = _fill0(dsvar['ADVT_ISOP'][t][mask]) * 1e-2
+    elif varn == 'salt':
+        integrand = _fill0(dsvar['ADVS_ISOP'][t][mask]) * 1e-2
+    else:
+        raise ValueError('This function only works for heat and salt transport.')
+    integrand *= dsvar['TAREA'][:][mask] * 1e-4
+    return np.sum(integrand)
+
+
+def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
     dxu = ds.variables['DXU'][:]/100.
     dyu = ds.variables['DYU'][:]/100.
     tarea = ds.variables['TAREA'][:]/1e4
@@ -129,11 +143,11 @@ def transport_divergence(ds,mask,kza=0,kzo=None):
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
     for k in xrange(kza,kzo):
-        uflux = ds.variables['UES'][0,k]
+        uflux = ds.variables['UES'][t,k]
         uflux *= dyu
         uflux *= dz[k]
         uflux *= mask
-        vflux = ds.variables['VNS'][0,k]
+        vflux = ds.variables['VNS'][t,k]
         vflux *= dxu
         vflux *= dz[k]
         vflux *= mask
