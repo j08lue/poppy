@@ -2,6 +2,8 @@ import numpy as np
 from oceanpy.fluxbudget import budget_over_region_2D
 from oceanpy.stats import central_differences
 
+from poppy.surface_salt_fluxes import salt_flux_to_fw_flux
+
 def _fill0(a):
     return np.ma.filled(a,0.)
 
@@ -32,6 +34,8 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=scalar,mask=mask,grid='ArakawaB')
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
+    elif varn == 'salt':
+        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
@@ -50,6 +54,7 @@ def fluxbudget_UESVNS(ds,mask,kza=0,kzo=None,t=0):
         vflux *= tarea
         vflux *= dz[k]
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
+    fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
@@ -85,6 +90,8 @@ def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
+    elif varn == 'salt':
+        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 fluxbudget_bolus = fluxbudget_bolus_visop
@@ -124,6 +131,8 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     # convert to right units
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
+    elif varn == 'salt':
+        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
@@ -136,14 +145,17 @@ def fluxbudget_bolus_advection_tendency(ds,mask,varn,t=0):
     else:
         raise ValueError('This function only works for heat and salt transport.')
     integrand *= dsvar['TAREA'][:][mask] * 1e-4
-    return np.sum(integrand)
+    integral = np.sum(integrand)
+    if varn == 'salt':
+        integral *= salt_flux_to_fw_flux(ds)
+    return integral
 
 
 def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
     dsvar = ds.variables
     dxu = dsvar['DXU'][:] * 1e-2
     dyu = dsvar['DYU'][:] * 1e-2
-    tarea = dsvar['TAREA'][:]/1e4
+    tarea = dsvar['TAREA'][:] * 1e-4
     dz = dsvar['dz'][:] * 1e-2    
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
@@ -159,6 +171,19 @@ def transport_divergence(ds,mask,kza=0,kzo=None,t=0):
         divergence = central_differences(uflux,dxu,axis=1) + central_differences(vflux,dyu,axis=0)
         divergence *= mask
         transport_divergence += np.sum(divergence*tarea)
+    transport_divergence *= salt_flux_to_fw_flux(ds)
     return transport_divergence
 
 
+def transport_divergence_from_vertical(ds,mask,kza=0,kzo=None,t=0):
+    dsvar = ds.variables
+    dz = dsvar['dz'][:] * 1e-2
+    if kzo is None: kzo = len(dz)
+    transport_divergence = 0.
+    for k in xrange(kza,kzo):
+        wflux = _fill0(dsvar['WTS'][t,k][mask])
+        wflux *= dz[k]
+        wflux *= dsvar['TAREA'][:][mask] * 1e-4
+        transport_divergence += np.sum(wflux)
+    transport_divergence *= salt_flux_to_fw_flux(ds)
+    return transport_divergence
