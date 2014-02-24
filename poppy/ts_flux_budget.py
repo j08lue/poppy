@@ -104,8 +104,8 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8):
         elif varn == 'freshwater':
             scalar = (S0 - np.ma.filled(ds.variables['SALT'][0,k],0)) / S0
         # get gradient
-        uflux = central_differences(scalar,dyt,axis=1) # [scalar] m-1
-        vflux = central_differences(scalar,dxt,axis=0) # [scalar] m-1
+        uflux = central_differences(scalar,dxt,axis=1) # [scalar] m-1
+        vflux = central_differences(scalar,dyt,axis=0) # [scalar] m-1
         # multiply gradient by diffusion coefficient
         kappa = np.ma.filled(ds.variables['KAPPA_ISOP'][0,k]/1e4,0) # m2 s-1
         uflux *= kappa
