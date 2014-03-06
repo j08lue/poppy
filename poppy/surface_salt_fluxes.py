@@ -26,9 +26,9 @@ SFWF - (PREC_F + EVAP+F + ROFF_F + IOFF_F + MELT_F) - SALT_F*(sflux_factor/salin
 
 The equation above can be compared to the POP code in forcing_coupled.F90; specifically the line
         STF(:,:,2,iblock) = RCALCT(:,:,iblock)*(  &
-                     (PREC_F(:,:,iblock)+EVAP_F(:,:,iblock)+  &
-MELT_F(:,:,iblock)+ROFF_F(:,:,iblock)+IOFF_F(:,:,iblock))*salinity_factor &
-                    + SALT_F(:,:,iblock)*sflux_factor)
+            (PREC_F(:,:,iblock) + EVAP_F(:,:,iblock) +  &
+                MELT_F(:,:,iblock) + ROFF_F(:,:,iblock) + IOFF_F(:,:,iblock))*salinity_factor &
+            + SALT_F(:,:,iblock)*sflux_factor)
 
 
 For guidance on conversion of FW flux to virtual salt flux, etc, refer to POP_ConstantsMod.F90
@@ -73,6 +73,9 @@ def salinity_restoring(ncfile):
             return _get_data(ds)
 
 
-def salt_flux_to_fw_flux(ds,value):
+def salt_flux_to_fw_flux(ds):
+    """Returns the factor with which to multiply salt flux with to get fresh water flux
+    i.e. (kg SALT/m^2/s) to (kg FW/m^2/s)
+    """
     dsvar = ds.variables
-    return value*(dsvar['sflux_factor'][0]/dsvar['salinity_factor'][0])
+    return dsvar['sflux_factor'][0] / dsvar['salinity_factor'][0]
