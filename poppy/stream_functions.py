@@ -1,6 +1,5 @@
 import numpy as np
 
-import phdpy.dsutils
 import poppy.grid
 
 def _fill0(a):
@@ -84,7 +83,7 @@ def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
     U *= dsvar['DYU'][:,:] * 1e-2
     U *= regmask
 
-    ix = phdpy.dsutils.ix_rewrap_lon(lon,lon0_rewrap,lat,latlim=(-60,60))
+    ix = poppy.grid.ix_rewrap_lon(lon,lon0_rewrap,lat,latlim=(-60,60))
     lon = lon[ix]
     lat = lat[ix]
     U = U[ix]
