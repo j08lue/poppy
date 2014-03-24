@@ -17,6 +17,10 @@ def get_vertical_stream_function(ds,region='Global',t=0):
         region ID to be used with ``poppy.grid.get_regmasks``
     t : int
         time level (default: 0)
+
+    Returns
+    -------
+    psi,lon,lat
     """
     dsvar = ds.variables
 
@@ -66,6 +70,10 @@ def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
         longitude at which to start the integration
     t : int
         time level (default: 0)
+
+    Returns
+    -------
+    psi,lon,lat
     """
     dsvar = ds.variables
 
@@ -94,4 +102,4 @@ def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
     psi *= 1e-6 # convert to Sv
     psimasked = np.ma.masked_where(regmask==0,psi)
 
-    return psimasked,lat,lon
+    return psimasked,lon,lat
