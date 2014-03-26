@@ -57,7 +57,7 @@ def get_vertical_stream_function(ds,region='Global',t=0):
 
 
 
-def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
+def get_barotropic_stream_function(ds,region,lon0=None,t=0):
     """Get barotropic stream function for a given region
     
     Parameters
@@ -66,7 +66,7 @@ def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
         open netCDF dataset
     region : str
         region ID to be used with ``poppy.grid.get_regmasks``
-    lon0_rewrap : float
+    lon0 : float
         longitude at which to start the integration
     t : int
         time level (default: 0)
@@ -91,11 +91,12 @@ def get_barotropic_stream_function(ds,region,lon0_rewrap,t=0):
     U *= dsvar['DYU'][:,:] * 1e-2
     U *= regmask
 
-    ix = poppy.grid.ix_rewrap_lon(lon,lon0_rewrap,lat,latlim=(-60,60))
-    lon = lon[ix]
-    lat = lat[ix]
-    U = U[ix]
-    regmask = regmask[ix]
+    if lon0 is not None:
+        ix = poppy.grid.ix_rewrap_lon(lon,lon0,lat,latlim=(-60,60))
+        lon = lon[ix]
+        lat = lat[ix]
+        U = U[ix]
+        regmask = regmask[ix]
 
     # compute stream function
     psi = np.cumsum(U[::-1],axis=0)[::-1]
