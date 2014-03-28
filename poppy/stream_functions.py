@@ -84,10 +84,8 @@ def get_barotropic_stream_function(ds,region,lon0=None,t=0):
 
     U = np.zeros(lat.shape)
     for k in xrange(len(dsvar['dz'])):
-        U += (
-                np.ma.filled((dsvar['UVEL'][t,k]),0) * 1e-2
-                * dsvar['dz'][k] * 1e-2
-                )
+        U += (_fill0(dsvar['UVEL'][t,k]) * 1e-2
+                * dsvar['dz'][k] * 1e-2)
     U *= dsvar['DYU'][:,:] * 1e-2
     U *= regmask
 
