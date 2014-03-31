@@ -100,7 +100,7 @@ def ix_rewrap_lon(lon,lon0,lat=None,latlim=()):
 
     Parameters
     ----------
-    lon : 2d array (y,x)
+    lon : 1d or 2d array (y,x)
         longitude grid
     lon0 : float
         longitude where to rewrap
@@ -118,15 +118,25 @@ def ix_rewrap_lon(lon,lon0,lat=None,latlim=()):
     """
     lon360 = np.mod(lon,360)
     lon0 = np.mod(lon0,360)
-    if lat is not None and latlim:
-        meanlon = np.mean(np.ma.masked_where(((lat>latlim[1]) | (lat<latlim[0])),lon360),axis=0)
+
+    if np.ndim(lon) == 2:
+        if lat is not None and latlim:
+            meanlon = np.mean(np.ma.masked_where(((lat>latlim[1]) | (lat<latlim[0])),lon360),axis=0)
+        else:
+            meanlon = np.mean(lon360,axis=0)
+        i0 = np.argmin(np.abs(meanlon-lon0))
+        ny,nx = lon.shape
+        ii = np.concatenate([np.arange(i0,nx),np.arange(0,i0)])
+        jj = np.arange(0,ny)
+        return np.ix_(jj,ii)
+
+    elif np.ndim(lon) == 1:
+        nx = len(lon)
+        return np.concatenate([np.arange(i0,nx),np.arange(0,i0)])
+
     else:
-        meanlon = np.mean(lon360,axis=0)
-    i0 = np.argmin(np.abs(meanlon-lon0))
-    ny,nx = lon.shape
-    ii = np.concatenate([np.arange(i0,nx),np.arange(0,i0)])
-    jj = np.arange(0,ny)
-    return np.ix_(jj,ii)
+        raise ValueError('lon must be a 1D or 2D array!')
+
 
 
 def find_region(longrid=None,latgrid=None,lonlim=(),latlim=(),latlim_include=()):
