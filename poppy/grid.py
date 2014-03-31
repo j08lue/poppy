@@ -131,6 +131,7 @@ def ix_rewrap_lon(lon,lon0,lat=None,latlim=()):
         return np.ix_(jj,ii)
 
     elif np.ndim(lon) == 1:
+        i0 = np.argmin(np.abs(lon-lon0))
         nx = len(lon)
         return np.concatenate([np.arange(i0,nx),np.arange(0,i0)])
 
