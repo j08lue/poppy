@@ -6,7 +6,7 @@ def _fill0(a):
     return np.ma.filled(a,0.)
 
 
-def get_vertical_stream_function(ds,region='Global',t=0):
+def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
     """Get vertical stream function for a given region
     
     Parameters
@@ -15,22 +15,27 @@ def get_vertical_stream_function(ds,region='Global',t=0):
         open netCDF dataset
     region : str
         region ID to be used with ``poppy.grid.get_regmasks``
-    t : int
-        time level (default: 0)
+    t : int or iterable
+        time level(s) (default: 0)
+    lat0 : float, optional
+        latitude at which to compute the stream function
 
     Returns
     -------
-    psi,lon,lat
+    zax, latax, latlim, psi
+        where psi is the stream function
+        if t is an iterable, psi has shape (nt,nz,ny)
+        if lat0 is given, ny = 1
     """
     dsvar = ds.variables
 
     lat = dsvar['ULAT'][:]
     dz = dsvar['dz'][:] * 1e-2
-    dx = dsvar['DXU'][:,:] * 1e-2
 
     ny,nx = lat.shape
     nz = len(dz)
 
+    # get region mask
     if region is None or region == 'Global':
         bmask = np.ones((ny,nx),bool)
     else:
@@ -41,16 +46,36 @@ def get_vertical_stream_function(ds,region='Global',t=0):
     latlim = (np.min(lat[bmask]),np.max(lat[bmask]))
     zax = dsvar['z_t'][:]*1e-2
 
-    Vdz = np.zeros((nz,ny))
+    # only one latitude circle
+    if lat0 is not None:
+        j0 = np.argmin(np.abs(latax-lat0))
+        ja,jo = j0,j0+1
+        ny = 1
+        imask = imask[ja:jo,:]
+        latax = latax[j0]
+    else:
+        ja,jo = 0,ny
+
+    # get zonal grid spacing
+    dx = dsvar['DXU'][ja:jo,:] * 1e-2
+
+    # get time axis length
+    try:
+        nt = len(t)
+    except TypeError:
+        nt = 1
+
+    # compute zonal sum of meridional transport
+    Vdz = np.zeros((nt,nz,ny))
     for k in xrange(nz):
-        Vdz[k,:] = np.sum((
-                _fill0(dsvar['VVEL'][t,k,:,:]) * 1e-2
+        Vdz[:,k,:] = np.sum((
+            _fill0(dsvar['VVEL'][t,k,ja:jo,:]) * 1e-2
                 * imask
                 * dx
                 ),axis=-1) * dz[k]
 
     # compute streamfunction in Sv
-    psi = np.cumsum(Vdz,axis=0)
+    psi = np.squeeze(np.cumsum(Vdz,axis=1)) # cumulative vertical sum
     psi *= 1e-6
 
     return zax,latax,latlim,psi
