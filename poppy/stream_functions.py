@@ -29,6 +29,7 @@ def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
     """
     dsvar = ds.variables
 
+    dx = dsvar['DXU'][:] * 1e-2
     lat = dsvar['ULAT'][:]
     dz = dsvar['dz'][:] * 1e-2
 
@@ -46,19 +47,6 @@ def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
     latlim = (np.min(lat[bmask]),np.max(lat[bmask]))
     zax = dsvar['z_t'][:]*1e-2
 
-    # only one latitude circle
-    if lat0 is not None:
-        j0 = np.argmin(np.abs(latax-lat0))
-        ja,jo = j0,j0+1
-        ny = 1
-        imask = imask[ja:jo,:]
-        latax = latax[j0]
-    else:
-        ja,jo = 0,ny
-
-    # get zonal grid spacing
-    dx = dsvar['DXU'][ja:jo,:] * 1e-2
-
     # get time axis length
     try:
         nt = len(t)
@@ -66,13 +54,24 @@ def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
         nt = 1
 
     # compute zonal sum of meridional transport
-    Vdz = np.zeros((nt,nz,ny))
-    for k in xrange(nz):
-        Vdz[:,k,:] = np.sum((
-            _fill0(dsvar['VVEL'][t,k,ja:jo,:]) * 1e-2
-                * imask
-                * dx
-                ),axis=-1) * dz[k]
+    if lat0 is not None: # only one latitude circle
+        j0 = np.argmin(np.abs(latax-lat0))
+        latax = latax[j0]
+        Vdz = np.zeros((nt,nz))
+        for k in xrange(nz):
+            Vdz[:,k] = np.sum((
+                _fill0(dsvar['VVEL'][t,k,j0,:]) * 1e-2
+                    * imask[j0]
+                    * dx[j0]
+                    ),axis=-1) * dz[k]
+    else:
+        Vdz = np.zeros((nt,nz,ny))
+        for k in xrange(nz):
+            Vdz[:,k,:] = np.sum((
+                _fill0(dsvar['VVEL'][t,k,:,:]) * 1e-2
+                    * imask
+                    * dx
+                    ),axis=-1) * dz[k]
 
     # compute streamfunction in Sv
     psi = np.squeeze(np.cumsum(Vdz,axis=1)) # cumulative vertical sum
