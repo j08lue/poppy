@@ -1,19 +1,17 @@
 import numpy as np
+import warnings
+
 from oceanpy.fluxbudget import budget_over_region_2D
 from oceanpy.stats import central_differences
 
-from poppy.surface_salt_fluxes import salt_flux_to_fw_flux
 
 def _fill0(a):
     return np.ma.filled(a,0.)
 
 
-_warned_about_units = False
 def _warn_virtual_salt_flux_units():
-    global _warned_about_units
-    if not _warned_about_units:
-        print('Warning: Output units are kg FW s-1!')
-        _warned_about_units = True
+    warnings.warn('Output units are kg SALT s-1!',)
+warnings.filterwarnings("once")
 
 
 def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
@@ -43,15 +41,12 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=scalar,mask=mask,grid='ArakawaB')
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
-    elif varn == 'salt':
-        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
 def fluxbudget_UESVNS(ds,mask,varn='salt',kza=0,kzo=None,t=0):
     """Integrate horizontal flux using UES and VNS variables"""
     _warn_virtual_salt_flux_units()
-
     dsvar = ds.variables
     dz = dsvar['dz'][:] * 1e-2
     tarea = dsvar['UAREA'][:] * 1e-4
@@ -65,8 +60,6 @@ def fluxbudget_UESVNS(ds,mask,varn='salt',kza=0,kzo=None,t=0):
         vflux *= tarea
         vflux *= dz[k]
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
-    if varn == 'salt':
-        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
@@ -103,8 +96,6 @@ def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
         fluxbudget += budget_over_region_2D(uflux,vflux,scalar=None,mask=mask)
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
-    elif varn == 'salt':
-        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 fluxbudget_bolus = fluxbudget_bolus_visop
@@ -145,8 +136,6 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     # convert to right units
     if varn == 'heat':
         fluxbudget *= (1e3 * 4e3 * 1e-15) # PW
-    elif varn == 'salt':
-        fluxbudget *= salt_flux_to_fw_flux(ds)
     return fluxbudget
 
 
@@ -161,8 +150,6 @@ def fluxbudget_bolus_advection_tendency(ds,mask,varn,t=0):
         raise ValueError('This function only works for heat and salt transport.')
     integrand *= dsvar['TAREA'][:][mask] * 1e-4
     integral = np.sum(integrand)
-    if varn == 'salt':
-        integral *= salt_flux_to_fw_flux(ds)
     return integral
 
 
@@ -191,7 +178,7 @@ def transport_divergence(ds,mask,varn='salt',kza=0,kzo=None,t=0):
         divergence = central_differences(uflux,dxu,axis=1) + central_differences(vflux,dyu,axis=0)
         divergence *= mask
         transport_divergence += np.sum(divergence*tarea)
-    transport_divergence *= salt_flux_to_fw_flux(ds)
+        if varn=='heat': warnings.warn('Units might be wrong for heat transport! Check!')
     return transport_divergence
 
 
@@ -210,6 +197,4 @@ def transport_divergence_from_vertical(ds,mask,varn='salt',kza=0,kzo=None,t=0):
         wflux *= dz[k]
         wflux *= dsvar['TAREA'][:][mask] * 1e-4
         transport_divergence += np.sum(wflux)
-    if varn == 'salt':
-        transport_divergence *= salt_flux_to_fw_flux(ds)
     return transport_divergence

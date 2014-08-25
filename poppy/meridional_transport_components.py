@@ -58,11 +58,17 @@ def diffusion_component(ds,varn,regmask=1,kza=0,kzo=None,S0=34.8):
             scalar = _fill0(dsvar['SALT'][0,k])
         elif varn == 'freshwater':
             scalar = (S0 - _fill0(dsvar['SALT'][0,k])) / S0
-        layer *= central_differences(scalar,dyt,axis=0) # [scalar] m s-1
+        gradient = central_differences(scalar,dyt,axis=0) # [scalar] m s-1
+        #gradient = np.zeros(scalar.shape)
+        #gradient[1:,:] = np.diff(scalar,axis=0)
+        #gradient[0] = gradient[1]
+        #gradient /= dyt
+        layer *= gradient
         layer *= dz[k]
         layer *= dxt
         layer *= regmask
         diffusion += np.sum(layer,axis=-1)
+        diffusion *= -1.
     if varn == 'heat':
         diffusion *= (1e3 * 4e3 * 1e-15) # PW
     elif varn == 'salt':
