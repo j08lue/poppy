@@ -17,6 +17,7 @@ setup(name = 'poppy',
           'numpy',
           'matplotlib',
           'netCDF4',
+          'pandas',
           ],
       dependency_links = [
           'https://github.com/j08lue/oceanpy/tarball/master#egg=oceanpy-0.1.0',
