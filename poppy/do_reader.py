@@ -81,3 +81,20 @@ def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea']):
 
     return dict(TS=data_TS,tr=data_tr)
 
+
+def read_do_multifile(files,strait):
+    """Read multiple POP diagnostic overflow output (do) files 
+    and concatenate their data for the given strait.
+    
+    Parameters
+    ----------
+    files : list of str
+        files to read and concatenate
+    strait : str
+        strait key to select
+    """
+    dfs = []
+    for fname in files:
+        data = read_do_file(fname)
+        dfs.append(data['TS'][strait])
+    return pandas.concat(dfs,ignore_index=True)
