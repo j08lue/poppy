@@ -1,14 +1,17 @@
-import pandas
+import pandas as pd
 from cStringIO import StringIO
 import itertools
 import numpy as np
+import datetime
 
 
-def _add_tday_index(df,start=1):
-    df['tday'] = np.arange(start,len(df)+start)
-    df.set_index('tday')
-    df.index.name = 'Day of year'
+
+def _add_index(df,year=1):
+    df['decyear'] = year + np.arange(len(df),dtype='f8')/len(df)
+    df.set_index('decyear',inplace=True)
+    df.index.name = 'Model year'
     return df
+
 
 def _yr_from_fname(fname):
     # e.g. SOMECASENAME.pop.do.0529-01-01-00000
@@ -19,7 +22,16 @@ def _yr_from_fname(fname):
         return 0
 
 
-def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea']):
+def _date_from_fname(fname):
+    # e.g. SOMECASENAME.pop.do.0529-01-01-00000
+    try:
+        return datetime.datetime.strftime(fname[-16:],'%Y-%m-%d-%H%M%S')
+    except:
+        print('Warning: Unable to get date from file name: '+fname)
+        return datetime.datetime(year=0,month=1,day=1)
+
+
+def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea'],year=None):
     """Read a POP diagnostic overflow output (do) file
     
     These files are usually located in the `hist` directory when
@@ -60,41 +72,45 @@ def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea']):
         ovf_TS[i].seek(0)
         ovf_tr[i].seek(0)
 
-    start = (_yr_from_fname(fname)-1)*365
+    # get start day
+    year = year or _yr_from_fname(fname)
 
     # Read separate straits into panda dfs
-    data_TS = {}
-    data_tr = {}
+    dfs_TS = []
+    dfs_tr = []
     for i,strait in enumerate(straits):
         # TS
-        df = pandas.read_csv(ovf_TS[i],
+        df = pd.read_csv(ovf_TS[i],
                 names=['n','Ti','Si','Ts','Ss','Te','Se','Tp','Sp'],
                 delim_whitespace=True)
-        df = _add_tday_index(df,start)
-        data_TS[strait] = df
+        _add_index(df,year)
+        dfs_TS.append(df)
         # tr
-        df = pandas.read_csv(ovf_tr[i],
+        df = pd.read_csv(ovf_tr[i],
                 names=['n','phi','Ms','Me','Mp','m','zt'],
                 delim_whitespace=True)
-        df = _add_tday_index(df,start)
-        data_tr[strait] = df
+        _add_index(df,year)
+        dfs_tr.append(df)
 
-    return dict(TS=data_TS,tr=data_tr)
+    return dict(
+            TS = pd.concat(dfs_TS,keys=straits,names=('Strait',dfs_TS[0].index.names[0])),
+            tr = pd.concat(dfs_tr,keys=straits,names=('Strait',dfs_tr[0].index.names[0])),
+        )
 
 
-def read_do_multifile(files,strait):
+def read_do_multifile(files,datatype='TS',**kwargs):
     """Read multiple POP diagnostic overflow output (do) files 
-    and concatenate their data for the given strait.
+    and concatenate their data.
     
     Parameters
     ----------
     files : list of str
         files to read and concatenate
-    strait : str
-        strait key to select
+    datatype : str in ['TS','tr']
+        data type to return
     """
     dfs = []
     for fname in files:
-        data = read_do_file(fname)
-        dfs.append(data['TS'][strait])
-    return pandas.concat(dfs,ignore_index=True)
+        data = read_do_file(fname,**kwargs)[datatype]
+        dfs.append(data)
+    return pd.concat(dfs)
