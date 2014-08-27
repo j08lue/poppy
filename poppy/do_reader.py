@@ -10,7 +10,7 @@ import glob
 def _add_index(df,year=1):
     df['decyear'] = year + np.arange(len(df),dtype='f8')/len(df)
     df.set_index('decyear',inplace=True)
-    df.index.name = 'Model year'
+    df.index.name = 'ModelYear'
     return df
 
 
