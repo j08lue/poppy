@@ -4,7 +4,7 @@ import itertools
 import numpy as np
 import datetime
 import glob
-
+from collections import defaultdict
 
 
 def _add_index(df,year=1):
@@ -68,7 +68,7 @@ def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea'],year=None):
     for i in xrange(nstraits):
         # take every (nstraits)th line starting from 0,1,2,3...
         ovf_TS[i].writelines(itertools.islice(lines_TS,i,None,nstraits))
-        ovf_tr[i].writelines(itertools.islice(lines_TS,i,None,nstraits))
+        ovf_tr[i].writelines(itertools.islice(lines_tr,i,None,nstraits))
         # rewind StringIOs
         ovf_TS[i].seek(0)
         ovf_tr[i].seek(0)
@@ -116,14 +116,14 @@ def read_do_multifile(files,datatypes=['TS','tr'],**kwargs):
     if len(files) == 1:
         files = sorted(glob.glob(files[0]))
 
-    dfs = {}
+    dfs = defaultdict(list)
     for fname in files:
         data = read_do_file(fname,**kwargs)
         for key in datatypes:
             dfs[key].append(data[key])
     df = {}
     for key in datatypes:
-        df[key] = pd.concat(dfs)
+        df[key] = pd.concat(dfs[key])
         df[key].files = files
     if len(datatypes) == 1:
         return df[datatypes[0]]
