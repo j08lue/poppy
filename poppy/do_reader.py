@@ -3,6 +3,7 @@ from cStringIO import StringIO
 import itertools
 import numpy as np
 import datetime
+import glob
 
 
 
@@ -109,8 +110,16 @@ def read_do_multifile(files,datatype='TS',**kwargs):
     datatype : str in ['TS','tr']
         data type to return
     """
+    if isinstance(files, basestring):
+        files = [files]
+
+    if len(files) == 1:
+        files = sorted(glob.glob(files[0]))
+
     dfs = []
     for fname in files:
         data = read_do_file(fname,**kwargs)[datatype]
         dfs.append(data)
-    return pd.concat(dfs)
+    df = pd.concat(dfs)
+    df.files = files
+    return df
