@@ -99,7 +99,7 @@ def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea'],year=None):
         )
 
 
-def read_do_multifile(files,datatype='TS',**kwargs):
+def read_do_multifile(files,datatypes=['TS','tr'],**kwargs):
     """Read multiple POP diagnostic overflow output (do) files 
     and concatenate their data.
     
@@ -107,8 +107,8 @@ def read_do_multifile(files,datatype='TS',**kwargs):
     ----------
     files : list of str
         files to read and concatenate
-    datatype : str in ['TS','tr']
-        data type to return
+    datatypes : list of str
+        datatypes to store (['TS','tr'])
     """
     if isinstance(files, basestring):
         files = [files]
@@ -116,10 +116,16 @@ def read_do_multifile(files,datatype='TS',**kwargs):
     if len(files) == 1:
         files = sorted(glob.glob(files[0]))
 
-    dfs = []
+    dfs = {}
     for fname in files:
-        data = read_do_file(fname,**kwargs)[datatype]
-        dfs.append(data)
-    df = pd.concat(dfs)
-    df.files = files
-    return df
+        data = read_do_file(fname,**kwargs)
+        for key in datatypes:
+            dfs[key].append(data[key])
+    df = {}
+    for key in datatypes:
+        df[key] = pd.concat(dfs)
+        df[key].files = files
+    if len(datatypes) == 1:
+        return df[datatypes[0]]
+    else:
+        return df
