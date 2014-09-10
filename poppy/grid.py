@@ -96,7 +96,7 @@ def get_zintstr(zint,zaxlim):
 def ix_rewrap_lon(lon,lon0,lat=None,latlim=()):
     """Locate the point in the 2D array `lon` where to rewrap it zonally 
     such that it starts with `lon0` in the west
-    Assumes that `lon` has the shape (y,x). Transpose if not.
+    Assumes that `lon` has the shape (y,x). Transpose beforehand if not.
 
     Parameters
     ----------
