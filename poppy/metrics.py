@@ -261,7 +261,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                 tseries[i] = reducefunc(dsvar[varn][0,0,jj,ii])
                 
     if use_pandas:
-        index = pd.Index(datetime_to_decimal_year(timeax), name='Model year')
+        index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(tseries, index=index, name='{} ({})'.format(varn, units))
         ts.latlim = latlim
         ts.lonlim = lonlim
