@@ -1,6 +1,8 @@
 import numpy as np
 import netCDF4
 import scipy.ndimage
+import subprocess
+import traceback
 try:
     import pandas as pd
     use_pandas = True
@@ -8,8 +10,41 @@ except ImportError:
     use_pandas = False
     pass
 
-import utils
-import poppy.grid
+from . import grid as poppygrid
+
+def get_ulimitn(default=1e3):
+    """Try to get the maximum number of open files on the system. Works with Unix."""
+    try:
+        maxn = int(subprocess.check_output(['ulimit -n'],shell=True))
+    except:
+        maxn = default
+        traceback.print_exc()
+    return maxn
+
+def datetime_to_decimal_year(dd,ndays=365):
+    """Compute decimal year from datetime instances 
+
+    Parameters
+    ----------
+    dd : datetime instance or iterable of such
+        dates to convert
+    ndays : int, float, or iterable of same shape as dd
+        number of days in year
+    """
+    dd = np.squeeze(dd)[()]
+    def _convert_single(d,n):
+        ttup = d.timetuple()
+        return (d.year 
+                + (ttup.tm_yday
+                    + (ttup.tm_hour + ttup.tm_min/60. + ttup.tm_sec/3600.
+                        )/24.
+                    )/float(n))
+    try:
+        ndays = np.ones(np.shape(dd))*ndays
+        return np.array([_convert_single(d,n) for d,n in zip(dd,ndays)])
+    except TypeError:
+        return _convert_single(dd,ndays)
+
 
 def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     """Retrieve AMOC time series from a set of CESM/POP model output files
@@ -36,7 +71,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     n = len(ncfiles)
     print('Processing {} files ...'.format(n))
 
-    maxn = utils.get_ulimitn()
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         dsvar = ds.variables
@@ -102,7 +137,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     """
     n = len(ncfiles)
     print('Processing {} files ...'.format(n))
-    maxn = utils.get_ulimitn()
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         latax = ds.variables['lat_aux_grid'][:]
@@ -148,7 +183,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     """
     n = len(ncfiles)
     print('Processing {} files ...'.format(n))
-    maxn = utils.get_ulimitn()
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         dsvar = ds.variables
@@ -201,10 +236,10 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     """
     n = len(ncfiles)
     print('Processing {} files ...'.format(n))
-    maxn = utils.get_ulimitn()
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
-        mask = poppy.grid.get_mask_lonlat(ds,lonlim=lonlim,latlim=latlim,grid=grid)
+        mask = poppygrid.get_mask_lonlat(ds,lonlim=lonlim,latlim=latlim,grid=grid)
         mask &= ds.variables['KM'+grid][:]>0
         jj,ii = np.where(mask)
         units = ds.variables[varn].units
@@ -226,7 +261,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                 tseries[i] = reducefunc(dsvar[varn][0,0,jj,ii])
                 
     if use_pandas:
-        index = pd.Index(utils.datetime_to_decimal_year(timeax), name='Model year')
+        index = pd.Index(datetime_to_decimal_year(timeax), name='Model year')
         ts = pd.Series(tseries, index=index, name='{} ({})'.format(varn, units))
         ts.latlim = latlim
         ts.lonlim = lonlim
