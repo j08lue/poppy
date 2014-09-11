@@ -22,7 +22,7 @@ def parse_ovf_file(fname,zerobased=True):
             if at_beginning:
                 try:
                     novf = int(line[1])
-                    if verbose: print('Number of overflows: {}'.format(novf))
+                    if verbose: print 'Number of overflows: {}'.format(novf)
                     at_beginning = False
                     continue
                 except ValueError:
@@ -31,7 +31,7 @@ def parse_ovf_file(fname,zerobased=True):
                 # meta info start
                 iovf = int(line[1])
                 ovfname = ''.join(line[2:32].split()).replace('\'','')
-                if verbose: print('Parsing overflow {}'.format(ovfname))
+                if verbose: print 'Parsing overflow {}'.format(ovfname)
                 overflows[ovfname] = {}
                 continue
             elif line[3] != ' ':
@@ -87,7 +87,7 @@ def parse_ovf_file(fname,zerobased=True):
                 continue
 
         if iovf != novf:
-            print('Warning: Something might have gone wrong. Initial '
+            print ('Warning: Something might have gone wrong. Initial '
                     'number of overflows not equal to the number of parsed overflows.')
 
     return overflows

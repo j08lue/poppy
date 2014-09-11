@@ -19,7 +19,7 @@ def _yr_from_fname(fname):
     try:
         return int(fname[-16:-12])
     except:
-        print('Warning: Unable to get year from file name: '+fname)
+        print 'Warning: Unable to get year from file name: '+fname
         return 0
 
 
@@ -28,7 +28,7 @@ def _date_from_fname(fname):
     try:
         return datetime.datetime.strftime(fname[-16:],'%Y-%m-%d-%H%M%S')
     except:
-        print('Warning: Unable to get date from file name: '+fname)
+        print 'Warning: Unable to get date from file name: '+fname
         return datetime.datetime(year=0,month=1,day=1)
 
 
