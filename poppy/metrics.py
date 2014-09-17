@@ -7,6 +7,7 @@ try:
     import pandas as pd
     use_pandas = True
 except ImportError:
+    print 'No Pandas found. Using simple output as'
     use_pandas = False
     pass
 
@@ -251,6 +252,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                                       dsvar['time_bound'].units,'proleptic_gregorian')
             tseries = reducefunc(dsvar[varn][:,jj,ii],axis=-1)
     else:
+        print '... file by file ...'
         timeax = np.zeros(n,'object')
         tseries = np.zeros((n))
         for i,fname in enumerate(sorted(ncfiles)):
@@ -258,7 +260,9 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
                                              dsvar['time_bound'].units,'proleptic_gregorian')
-                tseries[i] = reducefunc(dsvar[varn][0,0,jj,ii])
+                tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
+            if np.mod(i,100) == 0:
+                print '{}/{}'.format(i,n)
                 
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
