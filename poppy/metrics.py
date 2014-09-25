@@ -7,6 +7,7 @@ try:
     import pandas as pd
     use_pandas = True
 except ImportError:
+    print 'No Pandas found. Using simple output as'
     use_pandas = False
     print 'Pandas could not be imported. Functions will return data as tuple (tseries, timeaxis).'
     pass
@@ -70,7 +71,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
 
     """
     n = len(ncfiles)
-    print('Processing {} files ...'.format(n))
+    print 'Processing {} files ...'.format(n)
 
     maxn = get_ulimitn()
 
@@ -144,7 +145,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
         see metrics.componentnames
     """
     n = len(ncfiles)
-    print('Processing {} files ...'.format(n))
+    print 'Processing {} files ...'.format(n)
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -197,7 +198,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         see metrics.componentnames
     """
     n = len(ncfiles)
-    print('Processing {} files ...'.format(n))
+    print 'Processing {} files ...'.format(n)
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -257,7 +258,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
         longitude limits for maximum
     """
     n = len(ncfiles)
-    print('Processing {} files ...'.format(n))
+    print 'Processing {} files ...'.format(n)
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -273,6 +274,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                                       dsvar['time_bound'].units,'proleptic_gregorian')
             tseries = reducefunc(dsvar[varn][:,jj,ii],axis=-1)
     else:
+        print '... file by file ...'
         timeax = np.zeros(n,'object')
         tseries = np.zeros((n))
         for i,fname in enumerate(sorted(ncfiles)):
@@ -280,7 +282,9 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
                                              dsvar['time_bound'].units,'proleptic_gregorian')
-                tseries[i] = reducefunc(dsvar[varn][0,0,jj,ii])
+                tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
+            if np.mod(i,100) == 0:
+                print '{}/{}'.format(i,n)
                 
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
