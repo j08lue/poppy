@@ -7,7 +7,6 @@ try:
     import pandas as pd
     use_pandas = True
 except ImportError:
-    print 'No Pandas found. Using simple output as'
     use_pandas = False
     print 'Pandas could not be imported. Functions will return data as tuple (tseries, timeaxis).'
     pass
