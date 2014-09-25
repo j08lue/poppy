@@ -12,6 +12,8 @@ except ImportError:
 
 from . import grid as poppygrid
 
+### HELP FUNCTIONS
+
 def get_ulimitn(default=1e3):
     """Try to get the maximum number of open files on the system. Works with Unix."""
     try:
@@ -45,6 +47,7 @@ def datetime_to_decimal_year(dd,ndays=365):
     except TypeError:
         return _convert_single(dd,ndays)
 
+### METRICS FUNCTIONS
 
 def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     """Retrieve AMOC time series from a set of CESM/POP model output files
