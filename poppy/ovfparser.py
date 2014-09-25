@@ -10,7 +10,7 @@ import numpy as np
 
 verbose = False
 
-def parse_ovf_file(fname,zerobased=True):
+def parse_ovf_file(fname, zerobased=True):
     """Parse a POP overflow parameterization namelist file
     and return the grid indices of the cells involved"""
     overflows = {}
