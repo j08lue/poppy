@@ -33,7 +33,26 @@ class Struct:
 
 def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
     """Parse a POP overflow parameterization namelist file
-    and return the grid indices of the cells involved"""
+    and return the grid indices of the cells involved
+    
+    Parameters
+    ----------
+    fname : str
+        path to input file
+    outof_into_offset : bool
+        whether to add the offset to the indices that is stated in the
+        direction bit:
+                                             2
+                                          ________
+                      y ^                |        |
+                        |               3|   ijk  |1
+                        +--->            |        |
+                            x            |________|
+                                             4
+    output_zerobased : bool
+        whether to return the indices zero-based (Python)
+        if False, they are returned 1-based (original, Fortran)
+    """
     overflows = {}
     regionsdict = defaultdict(Struct)
     with open(fname,'r') as f:
