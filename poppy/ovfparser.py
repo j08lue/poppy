@@ -7,15 +7,38 @@ about the location of grid points used by the ovf parameterization.
 """
 from collections import defaultdict
 import numpy as np
+import itertools
 
 verbose = False
 
-def parse_ovf_file(fname, zerobased=True):
+class Struct:
+    def __init__(self, entries={}, **kwargs):
+        self.__dict__.update(entries)
+        self.__dict__.update(kwargs)
+    def __setitem__(self, k, v):
+        self.__dict__[k] = v
+    def __getitem__(self, k):
+        return self.__dict__[k]
+    def __repr__(self):
+        return '\n'.join(
+            ['{} : {}'.format(
+                k,repr(v)) for k,v in sorted(self.__dict__.items())])
+    def keys(self):
+        return list(self.__dict__.keys())
+    def iteritems(self):
+        return sorted(self.__dict__.items())
+    def items(self):
+        return sorted(self.__dict__.items())
+
+
+def parse_ovf_file(fname, output_zerobased=True):
     """Parse a POP overflow parameterization namelist file
     and return the grid indices of the cells involved"""
     overflows = {}
+    regionsdict = defaultdict(Struct)
     with open(fname,'r') as f:
         at_beginning = True
+        regions_def = False
         nsets = 0
         for line in f:
             # beginning
@@ -27,14 +50,31 @@ def parse_ovf_file(fname, zerobased=True):
                     continue
                 except ValueError:
                     pass
-            elif line[1] != ' ':
+            elif not line[1].isspace():
                 # meta info start
                 iovf = int(line[1])
                 ovfname = ''.join(line[2:32].split()).replace('\'','')
                 if verbose: print 'Parsing overflow {}'.format(ovfname)
                 overflows[ovfname] = {}
                 continue
-            elif line[3] != ' ':
+            elif line[:5].isspace() and '! regional' in line:
+                regions_def = True
+                regkeys = itertools.cycle(['inflow', 'src', 'ent'])
+                continue
+            elif regions_def:
+                key = next(regkeys)
+                idx = map(int, line[5:30].split())
+                for i, ind in zip(idx, ['imin', 'imax', 'jmin', 'jmax', 'kmin', 'kmax']):
+                    if output_zerobased:
+                        i -= 1
+                    regionsdict[key][ind] = i
+                if key == 'ent':
+                    # end of regions definitions
+                    regions_def = False
+                    overflows[ovfname]['regions'] = regionsdict
+                    regionsdict = defaultdict(Struct)
+                    continue
+            elif not line[3].isspace():
                 if 'number of kmt changes' in line:
                     continue
                 # start of set
@@ -75,7 +115,7 @@ def parse_ovf_file(fname, zerobased=True):
                     if nsets == 0:
                         for key in setdict.keys():
                             ind = np.array(setdict[key])
-                            if zerobased: 
+                            if output_zerobased: 
                                 ind -= 1
                             setdict[key] = ind
                         overflows[ovfname][settype] = setdict
@@ -88,7 +128,7 @@ def parse_ovf_file(fname, zerobased=True):
 
         if iovf != novf:
             print ('Warning: Something might have gone wrong. Initial '
-                    'number of overflows not equal to the number of parsed overflows.')
+                   'number of overflows not equal to the number of parsed overflows.')
 
     return overflows
 
