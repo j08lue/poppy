@@ -31,7 +31,7 @@ class Struct:
         return sorted(self.__dict__.items())
 
 
-def parse_ovf_file(fname, output_zerobased=True):
+def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
     """Parse a POP overflow parameterization namelist file
     and return the grid indices of the cells involved"""
     overflows = {}
@@ -94,16 +94,16 @@ def parse_ovf_file(fname, output_zerobased=True):
                     continue
             elif nsets > 0:
                 # in set
-                indx = line[4:17].split()
-                i,j,k,d = [int(v) for v in indx]
-                if d == 1:
-                    i+=1
-                elif d == 3:
-                    i-=1
-                elif d == 2:
-                    j+=1
-                elif d == 4:
-                    j-=1
+                i,j,k,d = map(int, line[4:17].split())
+                if outof_into_offset:
+                    if d == 1:
+                        i+=1
+                    elif d == 3:
+                        i-=1
+                    elif d == 2:
+                        j+=1
+                    elif d == 4:
+                        j-=1
                 setdict['ii'].append(i)
                 setdict['jj'].append(j)
                 setdict['kk'].append(k)
