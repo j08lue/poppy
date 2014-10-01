@@ -2,11 +2,12 @@
 The net surface forcing of POP model salinity is
 SFWF - QFLUX/latent_heat_fusion/1.e4            [kg FW /m^2/s]
 
-where bold-faced indicates variables found in POP model output netcdf, latent heat of fusion can also
-be found there, and the 1.e4 factor is needed for correct units. The QFLUX term isn't included in SFWF
-because it's not considered a flux exchanged between model components--it is the FW flux associated with
-frazil ice formation which occurs within the ocean model!
-
+where bold-faced indicates variables found in POP model output netcdf, 
+latent heat of fusion can also be found there, and the 1.e4 factor is 
+needed for correct units. The QFLUX term isn't included in SFWF
+because it's not considered a flux exchanged between model components -- 
+it is the FW flux associated with frazil ice formation which occurs 
+within the ocean model!
 
 This net surface flux can be broken into components as follows:
 SFWF - QFLUX/latent_heat_fusion/1.e4   =  
@@ -15,23 +16,30 @@ SFWF - QFLUX/latent_heat_fusion/1.e4   =
     - QFLUX/latent_heat_fusion/1.e4
     + (any weak or strong salinity restoring)
 
+MELT_F represents any FW flux computed by the ice model and sent to the ocean 
+(associated with ice melt/growth), while SALT_F represents any SALT flux computed 
+by the ice model and sent to the ocean (associated with the fact that ice 
+melt/growth requires that salt be added/removed from the ocean because ice has a 
+constant salinity of ~4 psu!). This salt flux must of course be converted to 
+appropriate units; in the above equation, it is converted from (kg SALT/m^2/s) 
+to (kg FW/m^2/s). 
 
-MELT_F represents any FW flux computed by the ice model and sent to the ocean (associated with ice melt/growth), while SALT_F represents any SALT flux computed by the ice model and sent to the ocean (associated with the fact that ice melt/growth requires that salt be added/removed from the ocean because ice has a constant salinity of ~4 psu!). This salt flux must of course be converted to appropriate units; in the above equation, it is converted from (kg SALT/m^2/s) to (kg FW/m^2/s). 
-
-Note that we don't generally save salinity restoring fluxes, so any difference between the RHS and LHS of the above equation computed from POP output fields might be attributable to salinity restoring.
+Note that we don't generally save salinity restoring fluxes, so any difference 
+between the RHS and LHS of the above equation computed from POP output fields 
+might be attributable to salinity restoring.
 
 SFWF - (PREC_F + EVAP+F + ROFF_F + IOFF_F + MELT_F) - SALT_F*(sflux_factor/salinity_factor)
 = (any weak or strong salinity restoring)
 
-
-The equation above can be compared to the POP code in forcing_coupled.F90; specifically the line
+The equation above can be compared to the POP code in forcing_coupled.F90; 
+specifically the line
         STF(:,:,2,iblock) = RCALCT(:,:,iblock)*(  &
             (PREC_F(:,:,iblock) + EVAP_F(:,:,iblock) +  &
                 MELT_F(:,:,iblock) + ROFF_F(:,:,iblock) + IOFF_F(:,:,iblock))*salinity_factor &
             + SALT_F(:,:,iblock)*sflux_factor)
 
-
-For guidance on conversion of FW flux to virtual salt flux, etc, refer to POP_ConstantsMod.F90
+For guidance on conversion of FW flux to virtual salt flux, etc, refer 
+to POP_ConstantsMod.F90
 """
 import netCDF4
 
