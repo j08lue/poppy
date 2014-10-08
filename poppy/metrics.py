@@ -119,7 +119,9 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(maxmeanamoc, index=index, name='AMOC')
         ts.latlim = latlim
-        ts.zlim = zlim
+        ts._metadata.append(dict(
+            zlim = zlim,
+            ))
         return ts
     else:
         return maxmeanamoc, timeax
@@ -180,8 +182,10 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(maxmeannheat, index=index, name='MHT')
-        ts.latlim = latlim
-        ts.component = component
+        ts._metadata.append(dict(
+            latlim = latlim,
+            component = component,
+            ))
         return ts
     else:
         return maxmeannheat, timeax
@@ -233,8 +237,10 @@ def get_mst(ncfiles, lat0=55, component=0):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(meannsalt, index=index, name='MST')
-        ts.lat0 = lat0
-        ts.component = component
+        ts._metadata.append(dict(
+            lat0 = lat0,
+            component = component,
+            ))
         return ts
     else:
         return meannsalt, timeax
@@ -291,10 +297,12 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(tseries, index=index, name='{} ({})'.format(varn, units))
-        ts.latlim = latlim
-        ts.lonlim = lonlim
-        ts.varn = varn
-        ts.reducefunc = str(reducefunc)
+        ts._metadata.append(dict(
+            latlim = latlim,
+            lonlim = lonlim,
+            varn = varn,
+            reducefunc = str(reducefunc),
+            ))
         return ts
     else:
         return tseries, timeax
