@@ -48,6 +48,13 @@ def datetime_to_decimal_year(dd,ndays=365):
     except TypeError:
         return _convert_single(dd,ndays)
 
+def _pandas_add_meta_data(ts, meta):
+    for k,v in meta.iteritems():
+        ts.k = v
+        ts._metadata.append(k)
+    return ts
+
+
 ### METRICS FUNCTIONS
 
 def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
@@ -118,9 +125,9 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(maxmeanamoc, index=index, name='AMOC')
-        ts.latlim = latlim
-        ts._metadata.append(dict(
-            zlim = zlim,
+        _pandas_add_meta_data(ts, meta=dict(
+           latlim = latlim,
+           zlim = zlim,
             ))
         return ts
     else:
@@ -182,7 +189,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(maxmeannheat, index=index, name='MHT')
-        ts._metadata.append(dict(
+        _pandas_add_meta_data(ts, meta=dict(
             latlim = latlim,
             component = component,
             ))
@@ -237,7 +244,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(meannsalt, index=index, name='MST')
-        ts._metadata.append(dict(
+        _pandas_add_meta_data(ts, meta=dict(
             lat0 = lat0,
             component = component,
             ))
@@ -297,7 +304,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(tseries, index=index, name='{} ({})'.format(varn, units))
-        ts._metadata.append(dict(
+        _pandas_add_meta_data(ts, meta=dict(
             latlim = latlim,
             lonlim = lonlim,
             varn = varn,
