@@ -32,10 +32,18 @@ def find_j_lat(ds,targetlat,varname='ULAT',region={},returnabs=True):
         return jlat,meanlat[jlat]
 
 
-def get_regmasks(region_mask,fmt=bool):
-    """Get boolean region masks based on the POP variable *region_mask*"""
+def get_regmasks(region_mask, fmt=bool):
+    """Get boolean region masks based on the POP variable `REGION_MASK`
+    
+    Parameters
+    ----------
+    region_mask : ndarray
+        data from dataset variable 'REGION_MASK'
+    fmt : (int or bool)
+        output type
+    """
     regions = ['Global','Atlantic','Indo-Pacific']
-    regmask = np.ones(region_mask.shape,dict(names=regions,formats=[fmt]*len(regions)))
+    regmask = np.ones(region_mask.shape, dict(names=regions, formats=[fmt]*len(regions)))
     regmask['Atlantic'] = (region_mask >= 6) & (np.abs(region_mask) != 7)
     regmask['Indo-Pacific'] = (region_mask >= 2) & (region_mask <= 3)
     return regmask
