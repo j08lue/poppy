@@ -8,7 +8,8 @@ try:
     use_pandas = True
 except ImportError:
     use_pandas = False
-    print 'Pandas could not be imported. Functions will return data as tuple (tseries, timeaxis).'
+    print 'Pandas could not be imported. Functions will return data as tuple '\
+            '(tseries, timeaxis).'
     pass
 
 from . import grid as poppygrid
@@ -23,6 +24,7 @@ def get_ulimitn(default=1e3):
         maxn = default
         traceback.print_exc()
     return maxn
+
 
 def datetime_to_decimal_year(dd,ndays=365):
     """Compute decimal year from datetime instances 
@@ -48,11 +50,24 @@ def datetime_to_decimal_year(dd,ndays=365):
     except TypeError:
         return _convert_single(dd,ndays)
 
+
 def _pandas_add_meta_data(ts, meta):
+    return ts # NOT WORKING PROPERLY ANYWAYS!
     for k,v in meta.iteritems():
         ts.k = v
         ts._metadata.append(k)
     return ts
+
+def _pandas_copy_meta_data(source, target, addmeta={}):
+    return target # NOT WORKING PROPERLY ANYWAYS!
+    for k in source._metadata:
+        try:
+            setattr(target, k, getattr(source, k))
+            target._metadata.append(k)
+        except AttributeError:
+            print 'Warning: Series/dataframe has no attribute \'{}\''.format(k)
+    _pandas_add_meta_data(target, addmeta)
+    return target
 
 
 ### METRICS FUNCTIONS
@@ -105,7 +120,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     else:
         timeax = np.zeros(n,'object')
         amoc = np.zeros((n,nz,nlat))
-        for i,fname in enumerate(sorted(ncfiles)):
+        for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
@@ -174,7 +189,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     else:
         timeax = np.zeros(n,'object')
         nheat = np.zeros((n,nlat))
-        for i,fname in enumerate(sorted(ncfiles)):
+        for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
@@ -244,7 +259,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
         ts = pd.Series(meannsalt, index=index, name='MST')
-        _pandas_add_meta_data(ts, meta=dict(
+        ts = _pandas_add_meta_data(ts, meta=dict(
             lat0 = lat0,
             component = component,
             ))
@@ -274,10 +289,10 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     """
     n = len(ncfiles)
     print 'Processing {} files ...'.format(n)
-    maxn = get_ulimitn()
+    maxn = 1000 #get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
-        mask = poppygrid.get_mask_lonlat(ds,lonlim=lonlim,latlim=latlim,grid=grid)
+        mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
         mask &= ds.variables['KM'+grid][:]>0
         jj,ii = np.where(mask)
         units = ds.variables[varn].units
@@ -287,12 +302,12 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
             dsvar = ds.variables
             timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
                                       dsvar['time_bound'].units,'proleptic_gregorian')
-            tseries = reducefunc(dsvar[varn][:,jj,ii],axis=-1)
+            tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
     else:
         print '... file by file ...'
         timeax = np.zeros(n,'object')
         tseries = np.zeros((n))
-        for i,fname in enumerate(sorted(ncfiles)):
+        for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
