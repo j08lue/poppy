@@ -289,7 +289,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     """
     n = len(ncfiles)
     print 'Processing {} files ...'.format(n)
-    maxn = 1000 #get_ulimitn()
+    maxn = 100 #get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
