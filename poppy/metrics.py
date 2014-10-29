@@ -18,6 +18,7 @@ from . import grid as poppygrid
 
 def get_ulimitn(default=1e3):
     """Try to get the maximum number of open files on the system. Works with Unix."""
+    return 100 # There are performance issues with netCDF4.MFDataset
     try:
         maxn = int(subprocess.check_output(['ulimit -n'],shell=True))
     except:
@@ -289,7 +290,7 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
     """
     n = len(ncfiles)
     print 'Processing {} files ...'.format(n)
-    maxn = 100 #get_ulimitn()
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
