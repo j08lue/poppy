@@ -51,6 +51,13 @@ def datetime_to_decimal_year(dd,ndays=365):
         return _convert_single(dd,ndays)
 
 
+def _nfiles_diag(n):
+    if n == 0:
+        raise ValueError('No files found. Check your glob pattern.')
+    else:
+        print 'Processing {} files ...'.format(n)
+
+
 def _pandas_add_meta_data(ts, meta):
     return ts # NOT WORKING PROPERLY ANYWAYS!
     for k,v in meta.iteritems():
@@ -95,8 +102,8 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
 
     """
     n = len(ncfiles)
-    print 'Processing {} files ...'.format(n)
-
+    _nfiles_diag(n)
+    
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -171,7 +178,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
         see metrics.componentnames
     """
     n = len(ncfiles)
-    print 'Processing {} files ...'.format(n)
+    _nfiles_diag(n)
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -226,7 +233,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         see metrics.componentnames
     """
     n = len(ncfiles)
-    print 'Processing {} files ...'.format(n)
+    _nfiles_diag(n)
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
@@ -288,8 +295,8 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
         longitude limits for maximum
     """
     n = len(ncfiles)
-    print 'Processing {} files ...'.format(n)
-    maxn = 1000 #get_ulimitn()
+    _nfiles_diag(n)
+    maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
         mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
