@@ -296,7 +296,6 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
         longitude limits for maximum
     """
     n = len(ncfiles)
-    print 'Processing {} files ...'.format(n)
     _nfiles_diag(n)
     maxn = get_ulimitn()
 
