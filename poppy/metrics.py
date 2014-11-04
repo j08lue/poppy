@@ -133,7 +133,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
                                              dsvar['time_bound'].units,'proleptic_gregorian')
-                amoc[i,...] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
+                amoc[i] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
                 
     window_size = 12
     if window_size > 1:
@@ -276,7 +276,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         return meannsalt, timeax
 
 
-def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonlim=()):
+def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=(), lonlim=(), k=0):
     """Get time series of any 2D POP field reduced by a numpy function
     
     Parameters
@@ -294,6 +294,8 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
         latitude limits for maximum
     lonlim : tup
         longitude limits for maximum
+    k : int
+        layer
     """
     n = len(ncfiles)
     _nfiles_diag(n)
@@ -304,13 +306,19 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
         mask &= ds.variables['KM'+grid][:]>0
         jj,ii = np.where(mask)
         units = ds.variables[varn].units
+        ndims = len(ds.variables[varn].shape)
+        if ndims not in (3,4):
+            raise IndexError('Fields with {} dimensions not supported.'.format(ndims))
         
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
             timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
                                       dsvar['time_bound'].units,'proleptic_gregorian')
-            tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
+            if ndims == 4:
+                tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
+            else:
+                tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
     else:
         print '... file by file ...'
         timeax = np.zeros(n,'object')
@@ -320,18 +328,23 @@ def get_timeseries(ncfiles, varn, grid='T', reducefunc=np.mean, latlim=(), lonli
                 dsvar = ds.variables
                 timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
                                              dsvar['time_bound'].units,'proleptic_gregorian')
-                tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
+                if ndims == 4:
+                    tseries[i] = reducefunc(dsvar[varn][0,k,jj,ii])
+                else:
+                    tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
             if np.mod(i,100) == 0:
                 print '{}/{}'.format(i,n)
                 
     if use_pandas:
         index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
-        ts = pd.Series(tseries, index=index, name='{} ({})'.format(varn, units))
+        ts = pd.Series(tseries, index=index, name=varn)
         _pandas_add_meta_data(ts, meta=dict(
             latlim = latlim,
             lonlim = lonlim,
             varn = varn,
             reducefunc = str(reducefunc),
+            k = k,
+            grid = grid,
             ))
         return ts
     else:
