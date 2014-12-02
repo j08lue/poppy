@@ -44,6 +44,7 @@ def _get_level_depth(fname, k):
     with netCDF4.Dataset(fname) as ds:
         return ds.variables['z_w'][k]*1e-2
 
+
 class Layer:
     """Horizontal layer of a given 4D variable"""
     def __init__(self,
@@ -51,15 +52,43 @@ class Layer:
             ncfiles,
             varname,
             scale=1.,
-            levels=None,
-            cmap = None,
-            t=0,
-            ii=None, jj=None,
+            levels = None,
+            cmap = 'RdYlBu_r',
             k=0,
             depth=None, 
+            t=0,
+            ii=None, jj=None,
             pause = 0,
             with_timestamp = True,
             ):
+        """
+        Create a new horizontal layer animation
+
+        Parameters
+        ----------
+        ax : axis 
+            axis to plot on
+        ncfiles : list
+            input files
+        varname : str
+           netCDF variable name
+        scale : float
+           scale the data by this factor
+        levels : sequence, optional
+           data levels for plotting
+        cmap : str or plt.cm
+            color map
+        k : int
+            vertical level (0-based)
+        depth : float
+            depth to find corresponding k for
+        t : int
+            time level for each file
+        ii,jj : ndarrays, optional
+            indices for subregion
+        pause : float, optional
+            pause during each iteration step
+        """
         self.ax = ax
         self.ncfiles = ncfiles
         self.varname = varname
@@ -94,7 +123,7 @@ class Layer:
             sample_data = self._get_data(self.ncfiles[-1])
             ticker = mticker.MaxNLocator(nbins=21, symmetric=True)
             levels = ticker.tick_values(sample_data.min(), sample_data.max()) 
-        self.cmap, self.norm = pycpt.modify.generate_cmap_norm(levels=levels, cm=(cmap or 'RdYlBu_r'))
+        self.cmap, self.norm = pycpt.modify.generate_cmap_norm(levels=levels, cm=cmap)
     
     def _update_long_name(self,fname):
         with netCDF4.Dataset(fname) as ds:
@@ -143,7 +172,7 @@ class Layer:
             self.xax = np.arange(len(self.ii)+1,dtype=float)-0.5
             self.yax = np.arange(len(self.jj)+1,dtype=float)-0.5
 
-    def __call__(self,i):
+    def __call__(self, i):
         fname = self.ncfiles[i]
         self.data = self._get_data(fname)
         time.sleep(self.pause)
@@ -157,28 +186,60 @@ class VerticalProfile:
     def __init__(self,
             ax,
             ncfiles,
+            varname,
             ii,jj,
+            scale = 1.,
+            levels = None,
+            cmap = 'RdYlBu_r',
             t = 0,
-            varname = 'IAGE',
-            levels = np.linspace(0,300,21),
             pause = 0,
             with_timestamp = True,
             ):
+        """
+        Create a new horizontal layer animation
+
+        Parameters
+        ----------
+        ax : axis 
+            axis to plot on
+        ncfiles : list
+            input files
+        varname : str
+           netCDF variable name
+        ii,jj : ndarrays, optional
+            indices for subregion
+        scale : float
+           scale the data by this factor
+        levels : sequence, optional
+           data levels for plotting
+        cmap : str or plt.cm
+            color map
+        t : int
+            time level for each file
+        pause : float, optional
+            pause during each iteration step
+        """
         self.ax = ax
         self.t = t
         self.ncfiles = ncfiles
         self.varname = varname
+        self.scale = scale
         self._update_long_name(ncfiles[0])
         self.jj = jj
         self.datashape = self._get_datashape(ncfiles[0])
-        self.ii = np.mod(ii,self.datashape[3])
+        self.ii = np.mod(ii, self.datashape[3])
         self.fig = self.ax.get_figure()
         self.pause = pause
         self.with_timestamp = with_timestamp
         self._make_axes(ncfiles[0])
         self.ax.autoscale(axis='x',tight=True)
         self.ax.invert_yaxis()
-        self.cmap,self.norm = pycpt.modify.generate_cmap_norm(levels,'RdYlBu_r')
+        # levels
+        if levels is None:
+            sample_data = self._get_data(self.ncfiles[-1])
+            ticker = mticker.MaxNLocator(nbins=21, symmetric=True)
+            levels = ticker.tick_values(sample_data.min(), sample_data.max()) 
+        self.cmap, self.norm = pycpt.modify.generate_cmap_norm(levels=levels, cm=cmap)
     
     def _update_long_name(self,fname):
         with netCDF4.Dataset(fname) as ds:
@@ -205,7 +266,7 @@ class VerticalProfile:
 
     def _get_data(self,fname):
         with netCDF4.Dataset(fname) as ds:
-            return ds.variables[self.varname][self.t,:,self.jj,self.ii]
+            return ds.variables[self.varname][self.t,:,self.jj,self.ii] * self.scale
 
     def _make_axes(self,fname):
         with netCDF4.Dataset(fname) as ds:
