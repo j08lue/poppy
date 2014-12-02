@@ -254,9 +254,9 @@ class VerticalProfile:
                 cmap=self.cmap,norm=self.norm)
         divider = make_axes_locatable(self.ax)
         cax = divider.append_axes(cbarpos, size="5%", pad=0.05)
-        self.cb = self.fig.colorbar(self.img,cax=cax,orientation='vertical')
-        self.cb.set_label(self.long_name)
-        if self.with_timestamp: _update_timestamp(self,fname)
+        self.cb = self.fig.colorbar(self.img, cax=cax, orientation='vertical', 
+                label = self.long_name)
+        if self.with_timestamp: _update_timestamp(self, fname)
         return self.img
 
     def _get_datashape(self,fname=None):
