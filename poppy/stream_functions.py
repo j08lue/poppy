@@ -6,7 +6,7 @@ def _fill0(a):
     return np.ma.filled(a,0.)
 
 
-def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
+def get_vertical_stream_function(ds, region='Global', t=0, lat0=None, custom_mask=None):
     """Get vertical stream function for a given region
     
     Parameters
@@ -14,7 +14,9 @@ def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
     ds : netCDF4.Dataset
         open netCDF dataset
     region : str
-        region ID to be used with ``poppy.grid.get_regmasks``
+        region ID to be used with `poppy.grid.get_regmasks`
+    custom_mask : ndarray
+        custom mask to use instead of region mask
     t : int or iterable
         time level(s) (default: 0)
     lat0 : float, optional
@@ -37,11 +39,15 @@ def get_vertical_stream_function(ds,region='Global',t=0,lat0=None):
     nz = len(dz)
 
     # get region mask
-    if region is None or region == 'Global':
-        bmask = np.ones((ny,nx),bool)
+    if custom_mask is None:
+        if region is None or region == 'Global':
+            bmask = np.ones((ny,nx),bool)
+        else:
+            bmask = poppy.grid.get_regmasks(dsvar['REGION_MASK'][:])[region]
+        imask = np.asarray(bmask, dtype='i4')
     else:
-        bmask = poppy.grid.get_regmasks(dsvar['REGION_MASK'][:])[region]
-    imask = np.asarray(bmask,dtype='i4')
+        bmask = np.asarray(custom_mask, dtype=bool)
+        imask = np.asarray(custom_mask, dtype='i4')
 
     latax = lat[:,np.int(np.round(np.mean(np.where(bmask)[-1])))]
     latlim = (np.min(lat[bmask]),np.max(lat[bmask]))
