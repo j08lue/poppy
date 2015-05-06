@@ -305,7 +305,6 @@ def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=(), lonlim=()
         mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
         mask &= ds.variables['KM'+grid][:]>0
         jj,ii = np.where(mask)
-        units = ds.variables[varn].units
         ndims = len(ds.variables[varn].shape)
         if ndims not in (3,4):
             raise IndexError('Fields with {} dimensions not supported.'.format(ndims))
