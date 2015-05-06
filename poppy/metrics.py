@@ -16,6 +16,23 @@ from . import grid as poppygrid
 
 ### HELP FUNCTIONS
 
+def _get_timeax(ds):
+    dsvar = ds.variables
+    time = dsvar['time']
+    timedata = time[:]
+    timeunits = time.units
+    if timeunits.startswith('days since 0000'):
+        timeunits = timeunits.replace('days since 0000', 'days since 0001')
+        timedata -= (365+16)
+    return netCDF4.num2date(timedata, units=timeunits, calendar=time.calendar)
+
+def _get_decimal_year(ds):
+    dsvar = ds.variables
+    time = dsvar['time']
+    if time.units != 'days since 0000-01-01 00:00:00':
+        raise NotImplementedError()
+    return time[:]/365.
+
 def get_ulimitn(default=1e3):
     """Try to get the maximum number of open files on the system. Works with Unix."""
     return 100 # There are performance issues with netCDF4.MFDataset
@@ -26,8 +43,7 @@ def get_ulimitn(default=1e3):
         traceback.print_exc()
     return maxn
 
-
-def datetime_to_decimal_year(dd,ndays=365):
+def datetime_to_decimal_year(dd, ndays=365):
     """Compute decimal year from datetime instances 
 
     Parameters
@@ -122,8 +138,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
-                                      dsvar['time_bound'].units,'proleptic_gregorian')
+            timeax = _get_timeax(ds)
             amoc = dsvar['MOC'][:,1,0,kza:kzo+1,ja:jo+1]
     else:
         timeax = np.zeros(n,'object')
@@ -131,8 +146,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
-                                             dsvar['time_bound'].units,'proleptic_gregorian')
+                timeax[i] = _get_timeax(ds)[0]
                 amoc[i] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
                 
     window_size = 12
@@ -191,8 +205,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
-                                      dsvar['time_bound'].units,'proleptic_gregorian')
+            timeax = _get_timeax(ds)
             nheat = dsvar['N_HEAT'][:,0,component,ja:jo+1]
     else:
         timeax = np.zeros(n,'object')
@@ -200,8 +213,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
-                                             dsvar['time_bound'].units,'proleptic_gregorian')
+                timeax[i] = _get_timeax(ds)[0]
                 nheat[i,:] = dsvar['N_HEAT'][0,0,component,ja:jo+1]
                 
     window_size = 12
@@ -245,8 +257,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
-                                      dsvar['time_bound'].units,'proleptic_gregorian')
+            timeax = _get_timeax(ds)
             nsalt = dsvar['N_SALT'][:,0,component,j0]
     else:
         timeax = np.zeros(n,'object')
@@ -254,8 +265,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         for i,fname in enumerate(sorted(ncfiles)):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
-                                             dsvar['time_bound'].units,'proleptic_gregorian')
+                timeax[i] = _get_timeax(ds)[0]
                 nsalt[i] = dsvar['N_SALT'][0,0,component,j0]
                 
     window_size=12
@@ -276,7 +286,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         return meannsalt, timeax
 
 
-def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=(), lonlim=(), k=0):
+def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=None, lonlim=None, k=0):
     """Get time series of any 2D POP field reduced by a numpy function
     
     Parameters
@@ -312,21 +322,20 @@ def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=(), lonlim=()
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = netCDF4.num2date(dsvar['time_bound'][:,0],
-                                      dsvar['time_bound'].units,'proleptic_gregorian')
+            timeax = _get_decimal_year(ds)
             if ndims == 4:
-                tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
+                #tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
+                tseries = reducefunc(dsvar[varn][:,k,:,:], axis=(-1,-2))
             else:
                 tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
     else:
         print '... file by file ...'
-        timeax = np.zeros(n,'object')
+        timeax = np.zeros(n, 'object')
         tseries = np.zeros((n))
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = netCDF4.num2date(dsvar['time_bound'][0,0],
-                                             dsvar['time_bound'].units,'proleptic_gregorian')
+                timeax[i] = _get_decimal_year(ds)[0]
                 if ndims == 4:
                     tseries[i] = reducefunc(dsvar[varn][0,k,jj,ii])
                 else:
@@ -335,7 +344,7 @@ def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=(), lonlim=()
                 print '{}/{}'.format(i,n)
                 
     if use_pandas:
-        index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
+        index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(tseries, index=index, name=varn)
         _pandas_add_meta_data(ts, meta=dict(
             latlim = latlim,
