@@ -1,7 +1,12 @@
+#!/usr/bin/env python
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
+
+import os
+import glob
 
 setup(name = 'poppy',
       version = '0.1.0',
@@ -12,6 +17,7 @@ setup(name = 'poppy',
       license = 'LICENSE.txt',
       description = 'Python tools for analyzing output data from the Parallel Ocean Program (POP).',
       long_description = open('README.md').read(),
+      scripts = glob.glob(os.path.join('scripts', '*')),
       install_requires = [
           'oceanpy',
           'numpy',
