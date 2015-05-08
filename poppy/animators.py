@@ -181,8 +181,8 @@ class Layer:
         return self.img
 
 
-class VerticalProfile:
-    """Vertical profile of a given variable"""
+class VerticalSection:
+    """Vertical section of a given variable"""
     def __init__(self,
             ax,
             ncfiles,
@@ -194,9 +194,10 @@ class VerticalProfile:
             t = 0,
             pause = 0,
             with_timestamp = True,
+            limit_k = True,
             ):
         """
-        Create a new horizontal layer animation
+        Create a new vertical section animation
 
         Parameters
         ----------
@@ -225,9 +226,19 @@ class VerticalProfile:
         self.varname = varname
         self.scale = scale
         self._update_long_name(ncfiles[0])
-        self.jj = jj
         self.datashape = self._get_datashape(ncfiles[0])
-        self.ii = np.mod(ii, self.datashape[3])
+        # indices
+        #if isinstance(jj, int):
+        #    jj = np.ones(len(ii), int) * jj
+        #elif isinstance(ii, int):
+        #    ii = np.ones(len(jj), int) * ii
+        self.jj = jj
+        self.ii = ii #np.mod(ii, self.datashape[3])
+        # maxk
+        self.maxk = self.datashape[-3]
+        if limit_k:
+            sample_data = self._get_data(self.ncfiles[-1])
+            self.maxk = np.max(np.sum(~np.ma.getmaskarray(sample_data),axis=0))
         self.fig = self.ax.get_figure()
         self.pause = pause
         self.with_timestamp = with_timestamp
@@ -259,25 +270,22 @@ class VerticalProfile:
         if self.with_timestamp: _update_timestamp(self, fname)
         return self.img
 
-    def _get_datashape(self,fname=None):
-        fname = fname or self.ncfiles[0]
+    def _get_datashape(self, fname):
         with netCDF4.Dataset(fname) as ds:
             return ds.variables[self.varname].shape
 
-    def _get_data(self,fname):
+    def _get_data(self, fname):
         with netCDF4.Dataset(fname) as ds:
-            return ds.variables[self.varname][self.t,:,self.jj,self.ii] * self.scale
+            return ds.variables[self.varname][self.t,:self.maxk,self.jj,self.ii] * self.scale
 
     def _make_axes(self,fname):
         with netCDF4.Dataset(fname) as ds:
             dsvar = ds.variables
-            self.zax = dsvar['z_w_bot'][:] * 1e-2
-            if isinstance(self.ii,int):
-                self.xax = np.arange(len(self.jj))
-            elif isinstance(self.jj,int):
-                self.xax = np.arange(len(self.ii))
-            else:
-                self.xax = np.arange(len(self.ii)+1,dtype=float)-0.5
+            self.zax = np.concatenate([[0],dsvar['z_w_bot'][:self.maxk]*1e-2])
+            try:
+                self.xax = np.arange(len(self.ii)+1, dtype=float)-0.5
+            except:
+                self.xax = np.arange(len(self.jj)+1, dtype=float)-0.5
 
     def __call__(self,i):
         fname = self.ncfiles[i]
@@ -294,7 +302,12 @@ class VerticalProfile:
             depth = ds.variables['HU'][:]*1e-2
             depth = np.ma.masked_where(depth<=0,depth)
         self.mapimg = self.mapax.pcolormesh(depth,cmap='GMT_ocean_r')
-        self.mapax.plot(self.ii,self.jj,'m',lw=2)
+        ii, jj = self.ii, self.jj
+        if isinstance(jj, int):
+            jj = np.ones(len(ii), int) * jj
+        elif isinstance(ii, int):
+            ii = np.ones(len(jj), int) * ii
+        self.mapax.plot(ii,jj,'m',lw=2)
         return self.mapfig
 
 
