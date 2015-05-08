@@ -51,17 +51,16 @@ if __name__ == "__main__":
     parser.add_argument('pattern', nargs='+',
             help='file search pattern. Provide inside "" from command line!',
             default='*.pop.h.????-??.nc')
-    parser.add_argument('-l','--latlim',type=parse_coords,
-            help='Latitude limits for AMOC region, e.g. 30,60. Takes negative values as e.g. m30 for -30.', 
+    parser.add_argument('-l','--latlim', type=parse_coords,
+            help='Latitude limits for AMOC region, e.g. 30,60. Accepts negative values as e.g. m30 for -30.', 
             default=(30,60))
-    parser.add_argument('-z','--zlim',type=lambda s: map(float,s.split(',')),
+    parser.add_argument('-z', '--zlim', type=lambda s: map(float,s.split(',')),
             help='Depth limits for AMOC region, e.g. 500,9999 for below 500 metres.',
             default=(500,9999))
-    parser.add_argument('-s',dest='savefig',action='store_true',
+    parser.add_argument('-s', dest='savefig', action='store_true',
             help='set this to save the figure with default filename')
-    parser.add_argument('--figname',type=str,
-            help='save the figure to the given filename (implies -s)')
-    parser.add_argument('--savetofile',dest='outfname',type=str,
+    parser.add_argument('--figname', help='save the figure to the given filename (implies -s)')
+    parser.add_argument('--savetofile', dest='outfname', 
             help='save the data to this file (pickle)')
     
     args = parser.parse_args()
