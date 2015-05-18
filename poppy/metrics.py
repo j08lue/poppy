@@ -4,6 +4,8 @@ import scipy.ndimage
 import subprocess
 import traceback
 import datetime
+import time
+import calendar
 try:
     import pandas as pd
     use_pandas = True
@@ -44,20 +46,26 @@ def get_ulimitn(default=1e3):
         traceback.print_exc()
     return maxn
 
-def datetime_to_decimal_year(dd, ndays=365):
+def datetime_to_decimal_year(dd, ndays=None):
     """Compute decimal year from datetime instances 
 
     Parameters
     ----------
     dd : datetime instance or iterable of such
         dates to convert
-    ndays : int, float, or iterable of same shape as dd
+    ndays : int, optional 
         number of days in year
+        if not given, it will be determined from the date
+        (assuming proleptic gregorian)
     """
-    n = ndays*24*3600
-    convert = np.vectorize(
-            lambda d: (d-datetime.datetime(d.year,1,1)).total_seconds() / float(n))
-    return np.squeeze(convert(dd))[()]
+    def _convert(d, ndays):
+        ttup = d.timetuple()
+        if ndays is None:
+            ndays = [365,364][calendar.isleap(d.year)]
+        nsec = ndays*24*3600
+        return d.year + (time.mktime(ttup)-time.mktime((d.year,1,1,0,0,0,0,0,ttup[-1]))) / float(nsec)
+    _convert_vec = np.vectorize(_convert)
+    return np.squeeze(_convert_vec(dd, ndays))[()]
 
 def _nfiles_diag(n):
     if n == 0:
@@ -86,7 +94,7 @@ def _pandas_copy_meta_data(source, target, addmeta={}):
 
 ### METRICS FUNCTIONS
 
-def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
+def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
     """Retrieve AMOC time series from a set of CESM/POP model output files
 
     Parameters
@@ -97,6 +105,8 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
         Latitude limits between which to find the maximum AMOC
     zlim : tuple (float,float)
         Depth limits between which to find the maximum AMOC
+    window_size : int
+        Smoothing window with to apply before taking maximum
 
     Returns
     -------
@@ -139,7 +149,6 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999)):
                 timeax[i] = _get_timeax(ds)[0]
                 amoc[i] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
                 
-    window_size = 12
     if window_size > 1:
         maxmeanamoc = np.max(np.max(scipy.ndimage.convolve1d(
             amoc,weights=np.ones(int(window_size))/float(window_size),
