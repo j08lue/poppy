@@ -3,6 +3,7 @@ import netCDF4
 import scipy.ndimage
 import subprocess
 import traceback
+import datetime
 try:
     import pandas as pd
     use_pandas = True
@@ -53,27 +54,16 @@ def datetime_to_decimal_year(dd, ndays=365):
     ndays : int, float, or iterable of same shape as dd
         number of days in year
     """
-    dd = np.squeeze(dd)[()]
-    def _convert_single(d,n):
-        ttup = d.timetuple()
-        return (d.year 
-                + (ttup.tm_yday
-                    + (ttup.tm_hour + ttup.tm_min/60. + ttup.tm_sec/3600.
-                        )/24.
-                    )/float(n))
-    try:
-        ndays = np.ones(np.shape(dd))*ndays
-        return np.array([_convert_single(d,n) for d,n in zip(dd,ndays)])
-    except TypeError:
-        return _convert_single(dd,ndays)
-
+    n = ndays*24*3600
+    convert = np.vectorize(
+            lambda d: (d-datetime.datetime(d.year,1,1)).total_seconds() / float(n))
+    return np.squeeze(convert(dd))[()]
 
 def _nfiles_diag(n):
     if n == 0:
         raise ValueError('No files found. Check your glob pattern.')
     else:
         print 'Processing {} files ...'.format(n)
-
 
 def _pandas_add_meta_data(ts, meta):
     return ts # NOT WORKING PROPERLY ANYWAYS!
