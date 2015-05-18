@@ -12,12 +12,12 @@ def plot_amoc_time_series(files, latlim=(30,60), zlim=(500,9999), savefig=False,
     ts.plot()
     plt.ylabel('AMOC (Sv)')
     plt.xlabel('integration year')
-
     if savefig or figname:
         figname = figname or 'AMOC_time_series.png'
         plt.gca().figure.savefig(figname,dpi=300)
     else:
         plt.show()
+    return ts
 
 
 if __name__ == "__main__":
@@ -47,5 +47,5 @@ if __name__ == "__main__":
     if len(args.files) == 1:
         args.files = sorted(glob.glob(args.files[0]))
  
-    plot_amoc_time_series(vars(args))
+    ts = plot_amoc_time_series(**vars(args))
  
