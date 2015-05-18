@@ -3,8 +3,7 @@ import netCDF4
 import scipy.ndimage
 import subprocess
 import traceback
-import datetime
-import time
+from time import mktime
 import calendar
 try:
     import pandas as pd
@@ -63,7 +62,7 @@ def datetime_to_decimal_year(dd, ndays=None):
         if ndays is None:
             ndays = [365,364][calendar.isleap(d.year)]
         nsec = ndays*24*3600
-        return d.year + (time.mktime(ttup)-time.mktime((d.year,1,1,0,0,0,0,0,ttup[-1]))) / float(nsec)
+        return d.year + (mktime(ttup)-mktime((d.year,1,1,0,0,0,0,0,ttup[-1]))) / float(nsec)
     _convert_vec = np.vectorize(_convert)
     return np.squeeze(_convert_vec(dd, ndays))[()]
 
