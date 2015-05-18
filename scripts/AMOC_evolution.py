@@ -8,22 +8,20 @@ import poppy.metrics
 poppy.metrics.use_pandas = False
 
 
-def save_amoc_time_series(pattern, outfname, latlim=(30,60), zlim=(500,9999)):
+def save_amoc_time_series(files, outfname, latlim=(30,60), zlim=(500,9999)):
     """Plot AMOC time series from CESM/POP data"""
-    ncfiles = sorted(glob.glob(pattern))
-    maxmeanamoc,timeax = poppy.metrics.get_amoc(ncfiles, latlim=latlim, zlim=zlim)
+    maxmeanamoc,timeax = poppy.metrics.get_amoc(files, latlim=latlim, zlim=zlim)
     dataout = dict(
             timeax=timeax,
             maxmeanamoc=maxmeanamoc,
-            latlim=latlim,zlim=zlim)
+            latlim=latlim, zlim=zlim)
     with open(outfname,'wb') as fout:
         pickle.dump(dataout,fout)
 
 
-def plot_amoc_time_series(pattern, latlim=(30,60), zlim=(500,9999), savefig=False, figname=''):
+def plot_amoc_time_series(files, latlim=(30,60), zlim=(500,9999), savefig=False, figname=''):
     """Plot AMOC time series from CESM/POP data"""
-    ncfiles = sorted(glob.glob(pattern))
-    maxmeanamoc,timeax = poppy.metrics.get_amoc(ncfiles, latlim=latlim, zlim=zlim)
+    maxmeanamoc,timeax = poppy.metrics.get_amoc(files, latlim=latlim, zlim=zlim)
     fig = plt.figure()
     ax = fig.gca()
     ax.plot(timeax,maxmeanamoc,'b')
@@ -48,7 +46,7 @@ if __name__ == "__main__":
 
     import argparse
     parser = argparse.ArgumentParser(description="Plot AMOC time series from CESM/POP data")
-    parser.add_argument('pattern', nargs='+',
+    parser.add_argument('files', nargs='+',
             help='file search pattern. Provide inside "" from command line!',
             default='*.pop.h.????-??.nc')
     parser.add_argument('-l','--latlim', type=parse_coords,
