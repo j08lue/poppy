@@ -3,7 +3,6 @@ import netCDF4
 import scipy.ndimage
 import subprocess
 import traceback
-from time import mktime
 import calendar
 try:
     import pandas as pd
@@ -58,11 +57,11 @@ def datetime_to_decimal_year(dd, ndays=None):
         (assuming proleptic gregorian)
     """
     def _convert(d, ndays):
-        ttup = d.timetuple()
         if ndays is None:
             ndays = [365,364][calendar.isleap(d.year)]
-        nsec = ndays*24*3600
-        return d.year + (mktime(ttup)-mktime((d.year,1,1,0,0,0,0,0,ttup[-1]))) / float(nsec)
+        nsec = float(ndays*24*3600)
+        doy = int(d.strftime('%j')) # ugly but currently ncdftime-safe
+        return d.year + ((doy-1)*24*3600 + d.hour*3600 + d.minute*60 + d.second) / nsec
     _convert_vec = np.vectorize(_convert)
     return np.squeeze(_convert_vec(dd, ndays))[()]
 
