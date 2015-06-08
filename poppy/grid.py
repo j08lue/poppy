@@ -42,9 +42,12 @@ def get_regmasks(region_mask, fmt=bool):
     fmt : (int or bool)
         output type
     """
-    regions = ['Global','Atlantic','Indo-Pacific']
+    # initialize
+    regions = ['Global', 'Atlantic', 'Pacific', 'Indo-Pacific']
     regmask = np.ones(region_mask.shape, dict(names=regions, formats=[fmt]*len(regions)))
-    regmask['Atlantic'] = (region_mask >= 6) & (np.abs(region_mask) != 7)
+    # regions
+    regmask['Pacific'] = (region_mask == 2)
+    regmask['Atlantic'] = (region_mask >= 6) & (region_mask != 7)
     regmask['Indo-Pacific'] = (region_mask >= 2) & (region_mask <= 3)
     return regmask
 
