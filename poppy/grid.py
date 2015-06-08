@@ -38,9 +38,13 @@ def get_regmasks(region_mask, fmt=bool):
     Parameters
     ----------
     region_mask : ndarray
-        data from dataset variable 'REGION_MASK'
+        values from dataset variable 'REGION_MASK'
     fmt : (int or bool)
         output type
+
+    Note
+    ----
+    The actual values must be passed in region_mask, not the netCDF variable.
     """
     # initialize
     regions = ['Global', 'Atlantic', 'Pacific', 'Indo-Pacific']
