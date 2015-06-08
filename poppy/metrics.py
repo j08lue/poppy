@@ -283,7 +283,9 @@ def get_mst(ncfiles, lat0=55, component=0):
         return meannsalt, timeax
 
 
-def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=None, lonlim=None, k=0):
+def get_timeseries(ncfiles, varn, grid, 
+        reducefunc=np.mean, 
+        latlim=None, lonlim=None, k=0):
     """Get time series of any 2D POP field reduced by a numpy function
     
     Parameters
@@ -309,22 +311,31 @@ def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=None, lonlim=
     maxn = get_ulimitn()
 
     with netCDF4.Dataset(ncfiles[0]) as ds:
-        mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
-        mask &= ds.variables['KM'+grid][:]>0
-        jj,ii = np.where(mask)
-        ndims = len(ds.variables[varn].shape)
+        dshape = ds.variables[varn].shape
+        ndims = len(dshape)
         if ndims not in (3,4):
             raise IndexError('Fields with {} dimensions not supported.'.format(ndims))
+        if latlim is None and lonlim is None:
+            mask = None
+        else:
+            mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
+            mask &= ds.variables['KM'+grid][:]>0
+            jj,ii = np.where(mask)
         
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
             timeax = _get_decimal_year(ds)
             if ndims == 4:
-                #tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
-                tseries = reducefunc(dsvar[varn][:,k,:,:], axis=(-1,-2))
+                if mask is None:
+                    tseries = reducefunc(dsvar[varn][:,k,:,:], axis=(-1,-2))
+                else:
+                    tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
             else:
-                tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
+                if mask is None:
+                    tseries = reducefunc(dsvar[varn][:,:,:], axis=(-1,-2))
+                else:
+                    tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
     else:
         print '... file by file ...'
         timeax = np.zeros(n, 'object')
@@ -334,9 +345,15 @@ def get_timeseries(ncfiles, varn, grid, reducefunc=np.mean, latlim=None, lonlim=
                 dsvar = ds.variables
                 timeax[i] = _get_decimal_year(ds)[0]
                 if ndims == 4:
-                    tseries[i] = reducefunc(dsvar[varn][0,k,jj,ii])
+                    if mask is None:
+                        tseries[i] = reducefunc(dsvar[varn][0,k,:,:])
+                    else:
+                        tseries[i] = reducefunc(dsvar[varn][0,k,jj,ii])
                 else:
-                    tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
+                    if mask is None:
+                        tseries[i] = reducefunc(dsvar[varn][0,:,:])
+                    else:
+                        tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
             if np.mod(i,100) == 0:
                 print '{}/{}'.format(i,n)
                 
