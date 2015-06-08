@@ -25,6 +25,7 @@ except RuntimeError:
     traceback.print_exc()
     print('Warning: File(s) could not be opened: {}'.format(args.ncfiles))
 
+
 def quickplot(varn, k, ds=ds, t=0, cmap='cubehelix', **kwarg):
     dsvar = ds.variables
     fig = plt.figure()
@@ -33,6 +34,7 @@ def quickplot(varn, k, ds=ds, t=0, cmap='cubehelix', **kwarg):
     plt.colorbar(label='{} ({})'.format(dsvar[varn].long_name, dsvar[varn].units))
     plt.show()
     return fig
+
 
 def save_figure(fname, fig=None):
     if fig is None:
@@ -43,9 +45,11 @@ def save_figure(fname, fig=None):
     else:
         fig.savefig(fname, dpi=200)
 
+
 def print_varmeta(varn):
     """Print variable meta information"""
     print(ds.variables[varn])
+
 
 def list_variables(units=True,ndim=None,shapes=True):
     """List variables in netCDF *dataset* including units if *units* for variables in *ndim* dimensions only, if specified"""
