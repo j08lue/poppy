@@ -3,7 +3,6 @@ import netCDF4
 import scipy.ndimage
 import subprocess
 import traceback
-import calendar
 try:
     import pandas as pd
     use_pandas = True
@@ -14,25 +13,9 @@ except ImportError:
     pass
 
 from . import grid as poppygrid
+from . import utils
 
 ### HELP FUNCTIONS
-
-def _get_timeax(ds):
-    dsvar = ds.variables
-    time = dsvar['time']
-    timedata = time[:]
-    timeunits = time.units
-    if timeunits.startswith('days since 0000'):
-        timeunits = timeunits.replace('days since 0000', 'days since 0001')
-        timedata -= (365+16)
-    return netCDF4.num2date(timedata, units=timeunits, calendar=time.calendar)
-
-def _get_decimal_year(ds):
-    dsvar = ds.variables
-    time = dsvar['time']
-    if time.units != 'days since 0000-01-01 00:00:00':
-        raise NotImplementedError()
-    return time[:]/365.
 
 def get_ulimitn(default=1e3):
     """Try to get the maximum number of open files on the system. Works with Unix."""
@@ -43,27 +26,6 @@ def get_ulimitn(default=1e3):
         maxn = default
         traceback.print_exc()
     return maxn
-
-def datetime_to_decimal_year(dd, ndays=None):
-    """Compute decimal year from datetime instances 
-
-    Parameters
-    ----------
-    dd : datetime instance or iterable of such
-        dates to convert
-    ndays : int, optional 
-        number of days in year
-        if not given, it will be determined from the date
-        (assuming proleptic gregorian)
-    """
-    def _convert(d, ndays):
-        if ndays is None:
-            ndays = [365,364][calendar.isleap(d.year)]
-        nsec = float(ndays*24*3600)
-        doy = int(d.strftime('%j')) # ugly but currently ncdftime-safe
-        return d.year + ((doy-1)*24*3600 + d.hour*3600 + d.minute*60 + d.second) / nsec
-    _convert_vec = np.vectorize(_convert)
-    return np.squeeze(_convert_vec(dd, ndays))[()]
 
 def _nfiles_diag(n):
     if n == 0:
@@ -99,12 +61,12 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
     ----------
     ncfiles : list of str
         paths to input files
-    latlim : tuple (float,float)
+    latlim : tuple
         Latitude limits between which to find the maximum AMOC
-    zlim : tuple (float,float)
+    zlim : tuple
         Depth limits between which to find the maximum AMOC
     window_size : int
-        Smoothing window with to apply before taking maximum
+        Smoothing window width to apply before taking maximum
 
     Returns
     -------
@@ -136,15 +98,15 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = _get_timeax(ds)
+            timeax = utils.get_time_decimal_year(ds)
             amoc = dsvar['MOC'][:,1,0,kza:kzo+1,ja:jo+1]
     else:
-        timeax = np.zeros(n,'object')
+        timeax = np.zeros(n)
         amoc = np.zeros((n,nz,nlat))
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = _get_timeax(ds)[0]
+                timeax[i] = utils.get_time_decimal_year(ds)
                 amoc[i] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
                 
     if window_size > 1:
@@ -157,7 +119,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
         maxmeanamoc = np.max(np.max(amoc,axis=-1),axis=-1)
 
     if use_pandas:
-        index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
+        index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(maxmeanamoc, index=index, name='AMOC')
         _pandas_add_meta_data(ts, meta=dict(
            latlim = latlim,
@@ -184,7 +146,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     ----------
     ncfiles : list of str
         paths to input files
-    latlim : tup
+    latlim : tuple
         latitude limits for maximum
     component : int
         see metrics.componentnames
@@ -202,15 +164,15 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = _get_timeax(ds)
+            timeax = utils.get_time_decimal_year(ds)
             nheat = dsvar['N_HEAT'][:,0,component,ja:jo+1]
     else:
-        timeax = np.zeros(n,'object')
+        timeax = np.zeros(n)
         nheat = np.zeros((n,nlat))
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = _get_timeax(ds)[0]
+                timeax[i] = utils.get_time_decimal_year(ds)
                 nheat[i,:] = dsvar['N_HEAT'][0,0,component,ja:jo+1]
                 
     window_size = 12
@@ -219,7 +181,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
         axis=0,mode='constant',cval=np.nan),axis=-1)
 
     if use_pandas:
-        index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
+        index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(maxmeannheat, index=index, name='MHT')
         _pandas_add_meta_data(ts, meta=dict(
             latlim = latlim,
@@ -254,15 +216,15 @@ def get_mst(ncfiles, lat0=55, component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = _get_timeax(ds)
+            timeax = utils.get_time_decimal_year(ds)
             nsalt = dsvar['N_SALT'][:,0,component,j0]
     else:
-        timeax = np.zeros(n,'object')
+        timeax = np.zeros(n)
         nsalt = np.zeros(n)
         for i,fname in enumerate(sorted(ncfiles)):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = _get_timeax(ds)[0]
+                timeax[i] = utils.get_time_decimal_year(ds)
                 nsalt[i] = dsvar['N_SALT'][0,0,component,j0]
                 
     window_size=12
@@ -272,7 +234,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     meannsalt[-window_size:] = np.nan
 
     if use_pandas:
-        index = pd.Index(datetime_to_decimal_year(timeax), name='ModelYear')
+        index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(meannsalt, index=index, name='MST')
         ts = _pandas_add_meta_data(ts, meta=dict(
             lat0 = lat0,
@@ -325,7 +287,7 @@ def get_timeseries(ncfiles, varn, grid,
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = _get_decimal_year(ds)
+            timeax = utils.get_time_decimal_year(ds)
             if ndims == 4:
                 if mask is None:
                     tseries = reducefunc(dsvar[varn][:,k,:,:], axis=(-1,-2))
@@ -337,13 +299,12 @@ def get_timeseries(ncfiles, varn, grid,
                 else:
                     tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
     else:
-        print '... file by file ...'
-        timeax = np.zeros(n, 'object')
+        timeax = np.zeros(n)
         tseries = np.zeros((n))
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = _get_decimal_year(ds)[0]
+                timeax[i] = utils.get_time_decimal_year(ds)
                 if ndims == 4:
                     if mask is None:
                         tseries[i] = reducefunc(dsvar[varn][0,k,:,:])
@@ -356,7 +317,6 @@ def get_timeseries(ncfiles, varn, grid,
                         tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
             if np.mod(i,100) == 0:
                 print '{}/{}'.format(i,n)
-                
     if use_pandas:
         index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(tseries, index=index, name=varn)
