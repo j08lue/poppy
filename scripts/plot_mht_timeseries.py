@@ -5,6 +5,7 @@ import cPickle as pickle
 import glob
 
 import poppy.metrics
+poppy.metrics.use_pandas = False
 
 def save_mht_time_series(pattern,outfname,latlim=(30,60),component=0):
     """Store MHT time series from CESM/POP data"""

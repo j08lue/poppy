@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import matplotlib.pyplot as plt ; plt.close('all')
-import glob
 import cPickle as pickle
+import glob
 
 import poppy.metrics
+poppy.metrics.use_pandas = False
 
 def save_mst_time_series(pattern, outfname, lat0=55, component=0):
     """Save MST time series from CESM/POP data"""
