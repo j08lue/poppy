@@ -14,7 +14,7 @@ def plot_amoc_time_series(files, latlim=(30,60), zlim=(500,9999), savefig=False,
     plt.xlabel('integration year')
     if savefig or figname:
         figname = figname or 'AMOC_time_series.png'
-        plt.gca().figure.savefig(figname,dpi=300)
+        plt.gca().figure.savefig(figname, dpi=200)
     else:
         plt.show()
     return ts
