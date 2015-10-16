@@ -44,5 +44,3 @@ Written in python2 but works well with `2to3`. One method to make this work is t
     2to3 poppy_py2 -o poppy -W -n
     
 It should then be possible to install the package with `python setup.py install`.
-    
-Then, all you need to do is to 
