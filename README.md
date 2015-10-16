@@ -39,6 +39,10 @@ and have the files opened and ready to explore as a multi-file `xray` or `netCDF
 Requirements
 ------------
 Please see the `setup.py` for dependencies.
-Written in python2 but works well with `2to3`, like so
+Written in python2 but works well with `2to3`. One method to make this work is to rename the `poppy` folder to e.g. `poppy_py2`, and then calling
 
-    2to3 poppy -o poppy_py3 -W -n
+    2to3 poppy_py2 -o poppy -W -n
+    
+It should then be possible to install the package with `python setup.py install`.
+    
+Then, all you need to do is to 
