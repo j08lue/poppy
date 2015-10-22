@@ -169,11 +169,17 @@ def find_region(longrid=None,latgrid=None,lonlim=(),latlim=(),latlim_include=())
         useful when grid is highly irregular at higher latitudes
         in that case, set e.g. latlim_include = (-60,60)
     """
+    if longrid is not None:
+        ny, nx = longrid.shape
+    elif latgrid is not None:
+        ny, nx = latgrid.shape
+    else:
+        raise ValueError('At least one of longrid and latgrid must be provided.')
     
     if latgrid is not None and latlim_include:
         included_in_mean = ((latgrid>=latlim_include[0]) & (latgrid<=latlim_include[1]))
     else:
-        included_in_mean = True
+        included_in_mean = np.ones((ny,nx), dtype=bool)
     
     if longrid is not None and lonlim:
         nx = longrid.shape[-1]
