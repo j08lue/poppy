@@ -1,9 +1,15 @@
-import matplotlib.pyplot as plt ; plt.close('all')
+import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os.path
 import pandas as pd
 from pandas.stats.moments import rolling_mean
 import gsw
+
+try:
+    import seaborn as sns
+except ImportError:
+    plt.style.use('ggplot')
+
 
 def plot_TS(df):
     fig = plt.figure()
