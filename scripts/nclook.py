@@ -72,6 +72,15 @@ if __name__ == "__main__":
         len(args.ncfiles), _ncmodule))
     ds, dsvar = open_files(args.ncfiles, return_dsvar=True)
 
+    # Convenience functions for xray
+    if _ncmodule == 'xray':
+        def list_variables(ds=ds):
+            for k in ds.keys():
+                try:
+                    print('{} : {}'.format(k, ds[k].long_name))
+                except AttributeError:
+                    print(k)
+
 
     # Convenience functions for netCDF4
     if _ncmodule == 'netCDF4':
