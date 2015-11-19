@@ -1,7 +1,6 @@
 """POP grid handling"""
 import numpy as np
 import bisect
-from scipy.interpolate import NearestNDInterpolator
 import netCDF4
 
 
@@ -205,48 +204,3 @@ def find_region(longrid=None,latgrid=None,lonlim=(),latlim=(),latlim_include=())
         jj = np.arange(ny)
     
     return np.ix_(jj,ii)
-
-
-
-def get_ndx(datafileref,datafile):
-    """Get ratio of grid spacings between two grids"""
-
-    with netCDF4.Dataset(datafileref) as dsref:
-
-        lonref = dsref.variables['ULONG'][:]
-        latref = dsref.variables['ULAT'][:]
-        dxref = dsref.variables['DXU'][:]
-
-        pointsref = np.vstack([latref.flat,lonref.flat]).T
-
-        with netCDF4.Dataset(datafile) as ds:
-
-            lon = ds.variables['ULONG'][:]
-            lat = ds.variables['ULAT'][:]
-            dx = ds.variables['DXU'][:]
-
-            points = np.vstack([lat.flat,lon.flat]).T
-
-            interpolator = NearestNDInterpolator(pointsref,dxref.flatten())
-
-            dxref_int = np.reshape(interpolator(points),lon.shape)
-
-            ndx = dxref_int/dx
-
-    return ndx
-
-
-def get_ugrid_from_file(fname,lon0_rewrap=None,latlim=(-60,60)):
-    """Get grid from POP ocean model data netCDF file, 
-    rewrap at *lon0_rewrap* using *latlim* (optional)"""
-    with netCDF4.Dataset(fname) as ds:
-        lon = ds.variables['ULONG'][:]
-        lat = ds.variables['ULAT'][:]
-
-    if lon0_rewrap is not None:
-        ix = ix_rewrap_lon(lon,lon0_rewrap,lat,latlim=latlim)
-        lon = lon[ix]
-        lat = lat[ix]
-
-    return lon,lat
-
