@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import netCDF4
 import scipy.ndimage
@@ -8,8 +9,8 @@ try:
     use_pandas = True
 except ImportError:
     use_pandas = False
-    print 'Pandas could not be imported. Functions will return data as tuple '\
-            '(tseries, timeaxis).'
+    print('Pandas could not be imported. Functions will return data as tuple '
+          '(tseries, timeaxis).')
     pass
 
 from . import grid as poppygrid
@@ -31,7 +32,7 @@ def _nfiles_diag(n):
     if n == 0:
         raise ValueError('No files found. Check your glob pattern.')
     else:
-        print 'Processing {} files ...'.format(n)
+        print('Processing {} files ...'.format(n))
 
 def _pandas_add_meta_data(ts, meta):
     return ts # NOT WORKING PROPERLY ANYWAYS!
@@ -47,7 +48,7 @@ def _pandas_copy_meta_data(source, target, addmeta={}):
             setattr(target, k, getattr(source, k))
             target._metadata.append(k)
         except AttributeError:
-            print 'Warning: Series/dataframe has no attribute \'{}\''.format(k)
+            print('Warning: Series/dataframe has no attribute \'{}\''.format(k))
     _pandas_add_meta_data(target, addmeta)
     return target
 
@@ -316,7 +317,7 @@ def get_timeseries(ncfiles, varn, grid,
                     else:
                         tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
             if np.mod(i,100) == 0:
-                print '{}/{}'.format(i,n)
+                print('{}/{}'.format(i,n))
     if use_pandas:
         index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(tseries, index=index, name=varn)

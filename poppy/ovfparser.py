@@ -5,6 +5,7 @@ parameterization namelist files.
 These files exist for each ocean grid and contain information
 about the location of grid points used by the ovf parameterization.
 """
+from __future__ import print_function
 from collections import defaultdict
 import numpy as np
 import itertools
@@ -64,7 +65,7 @@ def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
             if at_beginning:
                 try:
                     novf = int(line[1])
-                    if verbose: print 'Number of overflows: {}'.format(novf)
+                    if verbose: print('Number of overflows: {}'.format(novf))
                     at_beginning = False
                     continue
                 except ValueError:
@@ -73,7 +74,7 @@ def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
                 # meta info start
                 iovf = int(line[1])
                 ovfname = ''.join(line[2:32].split()).replace('\'','')
-                if verbose: print 'Parsing overflow {}'.format(ovfname)
+                if verbose: print('Parsing overflow {}'.format(ovfname))
                 overflows[ovfname] = {}
                 continue
             elif line[:5].isspace() and '! regional' in line:
@@ -146,8 +147,8 @@ def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
                 continue
 
         if iovf != novf:
-            print ('Warning: Something might have gone wrong. Initial '
-                   'number of overflows not equal to the number of parsed overflows.')
+            print('Warning: Something might have gone wrong. Initial '
+                  'number of overflows not equal to the number of parsed overflows.')
 
     return overflows
 
