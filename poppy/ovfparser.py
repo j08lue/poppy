@@ -25,7 +25,7 @@ class Struct:
             ['{} : {}'.format(
                 k,repr(v)) for k,v in sorted(self.__dict__.items())])
     def keys(self):
-        return list(self.__dict__.keys())
+        return list(self.__dict__)
     def iteritems(self):
         return sorted(self.__dict__.items())
     def items(self):
