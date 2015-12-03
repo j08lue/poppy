@@ -83,7 +83,7 @@ def parse_ovf_file(fname, outof_into_offset=False, output_zerobased=True):
                 continue
             elif regions_def:
                 key = next(regkeys)
-                idx = map(int, line[5:30].split())
+                idx = list(map(int, line[5:30].split()))
                 for i, ind in zip(idx, ['imin', 'imax', 'jmin', 'jmax', 'kmin', 'kmax']):
                     if output_zerobased:
                         i -= 1
