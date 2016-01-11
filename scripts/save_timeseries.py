@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy as np
 import argparse
 import glob
@@ -32,7 +33,7 @@ def get_timeseries(files, varn, grid, region, func, outfile):
             reducefunc=getattr(np, func),
             **regionlims[region])
     ts.to_hdf(outfile, key=varn+'_'+region, mode='w', format='table')
-    print 'Data saved to {}'.format(outfile)
+    print('Data saved to {}'.format(outfile))
 
 
 if __name__ == "__main__":

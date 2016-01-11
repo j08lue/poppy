@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy as np
 import argparse
 import glob
@@ -65,4 +66,4 @@ if __name__ == "__main__":
     
     ts.to_hdf(args.outfile, key='{0.varn}_{0.region}'.format(args), mode='w', format='table')
 
-    print 'Data saved to {}'.format(args.outfile)
+    print('Data saved to {}'.format(args.outfile))

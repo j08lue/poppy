@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import numpy as np
 import pandas as pd
 import argparse
@@ -52,5 +53,5 @@ if __name__ == "__main__":
 
     ts.to_hdf(args.outfile, key=args.varn+'_'+args.region, mode='w', format='table')
 
-    print 'Data saved to {}'.format(args.outfile)
+    print('Data saved to {}'.format(args.outfile))
 

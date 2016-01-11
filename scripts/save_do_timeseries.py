@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
 import argparse
 import glob
 try:
@@ -20,13 +21,13 @@ if __name__ == "__main__":
         files = sorted(glob.glob(args.files))
     
     files = sorted(args.files)
-    print 'Processing {} files ...'.format(len(files))
+    print('Processing {} files ...'.format(len(files)))
 
     df = do_reader.read_do_multifile(files=files)
 
     if args.outfile.endswith('.h5'):
         df.to_hdf(args.outfile, key='df', mode='w', format='table')
     else:
-        print '    Using pickle ...'
+        print('    Using pickle ...')
         with open(args.outfile,'wb') as fout:
             pickle.dump(df,fout)
