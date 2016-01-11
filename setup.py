@@ -9,7 +9,7 @@ import os
 import glob
 
 setup(name = 'poppy',
-      version = '0.1.0',
+      version = '0.2.0',
       author = 'Jonas Bluethgen',
       author_email = 'bluthgen@nbi.ku.dk',
       packages = ['poppy'],
@@ -19,13 +19,13 @@ setup(name = 'poppy',
       long_description = open('README.md').read(),
       scripts = glob.glob(os.path.join('scripts', '*')),
       install_requires = [
-          'oceanpy',
+          'oceanpy>=0.2.0',
           'numpy',
           'matplotlib',
           'netCDF4',
           'pandas',
           ],
       dependency_links = [
-          'https://github.com/j08lue/oceanpy/tarball/master#egg=oceanpy-0.1.0',
+          'https://github.com/j08lue/oceanpy/tarball/master#egg=oceanpy-0.2.0',
           ],
       )
