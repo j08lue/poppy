@@ -38,7 +38,7 @@ if __name__ == "__main__":
             help='Output file')
     args = parser.parse_args()
 
-    if isinstance(args.files, basestring):
+    if isinstance(args.files, str):
         files = [args.files]
     
     files = sorted(args.files)

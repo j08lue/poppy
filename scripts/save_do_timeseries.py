@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--outfile', type=str, help='Output file')
     args = parser.parse_args()
 
-    if isinstance(args.files, basestring):
+    if isinstance(args.files, str):
         files = sorted(glob.glob(args.files))
     
     files = sorted(args.files)
