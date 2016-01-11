@@ -262,7 +262,7 @@ def get_timeseries(ncfiles, varn, grid,
         which grid the variable is on
     reducefunc : function
         function to reduce the selected region
-        must have an 'axis' parameter to select reduction axis
+        NOTE: must be NaN-aware
     latlim : tup
         latitude limits for maximum
     lonlim : tup

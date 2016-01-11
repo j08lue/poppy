@@ -28,7 +28,7 @@ def get_annual_max_xmxl(files, region):
             files,
             varn='XMXL',
             grid='T',
-            reducefunc=np.max,
+            reducefunc=np.nanmax,
             **regionlims[region])
     ts /= 100.
     tssmooth = pd.rolling_max(ts, window=12, center=True)
