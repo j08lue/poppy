@@ -55,6 +55,35 @@ def get_regmasks(region_mask, fmt=bool):
     return regmask
 
 
+def get_grid_mask(lon, lat, lonlim=None, latlim=None):
+    """Mask the region confined by `lonlim` and `latlim`
+    
+    Parameters
+    ----------
+    lon, lat : ndarrays
+        lon, lat grid
+    lonlim, latlim : tup
+        limits for region
+
+    Returns
+    -------
+    bool mask
+    """
+    mask = np.ones(lon.shape, bool)
+    if lonlim is not None:
+        lon = np.mod(lon, 360)
+        lonlim = np.mod(lonlim,360)
+        if np.diff(lonlim) > 0:
+            mask &= (lon >= lonlim[0]) & (lon <= lonlim[1])
+        else:
+            mask &= (lon >= lonlim[0]) | (lon <= lonlim[1])
+    if latlim is not None:
+        mask &= (lat >= latlim[0]) & (lat <= latlim[1])
+    if not mask.any():
+        raise ValueError('All masked.')
+    return mask
+
+
 def get_mask_lonlat(fname,lonlim=None,latlim=None,grid='T'):
     """Mask the region confined by `lonlim` and `latlim` in the grid from `fname`
     
