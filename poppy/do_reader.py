@@ -1,6 +1,6 @@
 from __future__ import print_function
 import pandas as pd
-from cStringIO import StringIO
+from io import StringIO
 import itertools
 import numpy as np
 import datetime
@@ -112,7 +112,7 @@ def read_do_multifile(files,**kwargs):
     files : list of str
         files to read and concatenate
     """
-    if isinstance(files, basestring):
+    if isinstance(files, str):
         files = [files]
 
     if len(files) == 1:
