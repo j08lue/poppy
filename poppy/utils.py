@@ -25,34 +25,32 @@ def datetime_to_decimal_year(dd, ndays=None):
     return np.squeeze(_convert_vec(dd, ndays))[()]
 
 
-def get_time_datetime(ds):
+def get_time_datetime(timevar):
     """Get datetime instances from 'time' variable
     using netCDF4.num2date but accounting for reference year 0000
     
     Parameters
     ----------
-    ds : open netCDF4.Dataset
+    timevar : netCDF4.Dataset(fname).variables['time']
         POP input data
     """
-    dsvar = ds.variables
-    time = dsvar['time']
-    timedata = time[:]
-    timeunits = time.units
+    timedata = timevar[:]
+    timeunits = timevar.units
     if timeunits.startswith('days since 0000'):
         timeunits = timeunits.replace('days since 0000', 'days since 0001')
         timedata -= 364
-    return netCDF4.num2date(timedata, units=timeunits, calendar=time.calendar)
+    return netCDF4.num2date(timedata, units=timeunits, calendar=timevar.calendar)
 
 
-def get_time_decimal_year(ds, **kwarg):
+def get_time_decimal_year(timevar, **kwarg):
     """Get time from 'time' variable in dataset and convert to decimal year
     
     Parameters
     ----------
-    ds : open netCDF4.Dataset
+    timevar : netCDF4.Dataset(fname).variables['time']
         POP input data
     """
-    return datetime_to_decimal_year(get_time_datetime(ds))
+    return datetime_to_decimal_year(get_time_datetime(timevar))
     
 
 
