@@ -1,6 +1,7 @@
 from __future__ import print_function
 import numpy as np
 import netCDF4
+import xray
 import scipy.ndimage
 import subprocess
 import traceback
@@ -99,7 +100,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = utils.get_time_decimal_year(ds)
+            timeax = utils.get_time_decimal_year(dsvar['time'])
             amoc = dsvar['MOC'][:,1,0,kza:kzo+1,ja:jo+1]
     else:
         timeax = np.zeros(n)
@@ -107,7 +108,7 @@ def get_amoc(ncfiles, latlim=(30,60), zlim=(500,9999), window_size=12):
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = utils.get_time_decimal_year(ds)
+                timeax[i] = utils.get_time_decimal_year(dsvar['time'])
                 amoc[i] = dsvar['MOC'][0,1,0,kza:kzo+1,ja:jo+1]
                 
     if window_size > 1:
@@ -165,7 +166,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = utils.get_time_decimal_year(ds)
+            timeax = utils.get_time_decimal_year(dsvar['time'])
             nheat = dsvar['N_HEAT'][:,0,component,ja:jo+1]
     else:
         timeax = np.zeros(n)
@@ -173,7 +174,7 @@ def get_mht(ncfiles, latlim=(30,60), component=0):
         for i,fname in enumerate(ncfiles):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = utils.get_time_decimal_year(ds)
+                timeax[i] = utils.get_time_decimal_year(dsvar['time'])
                 nheat[i,:] = dsvar['N_HEAT'][0,0,component,ja:jo+1]
                 
     window_size = 12
@@ -217,7 +218,7 @@ def get_mst(ncfiles, lat0=55, component=0):
     if n <= maxn:
         with netCDF4.MFDataset(ncfiles) as ds:
             dsvar = ds.variables
-            timeax = utils.get_time_decimal_year(ds)
+            timeax = utils.get_time_decimal_year(dsvar['time'])
             nsalt = dsvar['N_SALT'][:,0,component,j0]
     else:
         timeax = np.zeros(n)
@@ -225,7 +226,7 @@ def get_mst(ncfiles, lat0=55, component=0):
         for i,fname in enumerate(sorted(ncfiles)):
             with netCDF4.Dataset(fname) as ds:
                 dsvar = ds.variables
-                timeax[i] = utils.get_time_decimal_year(ds)
+                timeax[i] = utils.get_time_decimal_year(dsvar['time'])
                 nsalt[i] = dsvar['N_SALT'][0,0,component,j0]
                 
     window_size=12
@@ -273,51 +274,53 @@ def get_timeseries(ncfiles, varn, grid,
     _nfiles_diag(n)
     maxn = get_ulimitn()
 
-    with netCDF4.Dataset(ncfiles[0]) as ds:
-        dshape = ds.variables[varn].shape
-        ndims = len(dshape)
-        if ndims not in (3,4):
-            raise IndexError('Fields with {} dimensions not supported.'.format(ndims))
+    # get mask
+    with xray.open_dataset(ncfiles[0], decode_times=False) as ds:
         if latlim is None and lonlim is None:
             mask = None
         else:
-            mask = poppygrid.get_mask_lonlat(ds, lonlim=lonlim, latlim=latlim, grid=grid)
+            mask = poppygrid.get_grid_mask(
+                    lon = ds[grid+'LONG'], 
+                    lat = ds[grid+'LAT'],
+                    lonlim=lonlim, latlim=latlim)
             mask &= ds.variables['KM'+grid][:]>0
-            jj,ii = np.where(mask)
-        
+
+    # read data
     if n <= maxn:
-        with netCDF4.MFDataset(ncfiles) as ds:
-            dsvar = ds.variables
-            timeax = utils.get_time_decimal_year(ds)
-            if ndims == 4:
-                if mask is None:
-                    tseries = reducefunc(dsvar[varn][:,k,:,:], axis=(-1,-2))
-                else:
-                    tseries = reducefunc(dsvar[varn][:,k,jj,ii], axis=-1)
-            else:
-                if mask is None:
-                    tseries = reducefunc(dsvar[varn][:,:,:], axis=(-1,-2))
-                else:
-                    tseries = reducefunc(dsvar[varn][:,jj,ii], axis=-1)
+        with xray.open_mfdataset(ncfiles, decode_times=False) as ds:
+            # select variable
+            ds = ds[varn]
+            # select level
+            try:
+                ds = ds.isel(z_t=k)
+            except ValueError:
+                pass
+            # apply mask
+            if mask is not None:
+                ds = ds.where(mask)
+            tseries = ds.reduce(reducefunc, ['nlon', 'nlat']).values
+            timevar = ds['time']
+            timeax = utils.get_time_decimal_year(timevar)
     else:
         timeax = np.zeros(n)
         tseries = np.zeros((n))
         for i,fname in enumerate(ncfiles):
-            with netCDF4.Dataset(fname) as ds:
-                dsvar = ds.variables
-                timeax[i] = utils.get_time_decimal_year(ds)
-                if ndims == 4:
-                    if mask is None:
-                        tseries[i] = reducefunc(dsvar[varn][0,k,:,:])
-                    else:
-                        tseries[i] = reducefunc(dsvar[varn][0,k,jj,ii])
-                else:
-                    if mask is None:
-                        tseries[i] = reducefunc(dsvar[varn][0,:,:])
-                    else:
-                        tseries[i] = reducefunc(dsvar[varn][0,jj,ii])
-            if np.mod(i,100) == 0:
-                print('{}/{}'.format(i,n))
+            with xray.open_dataset(fname, decode_times=False) as ds:
+                # select variable
+                ds = ds[varn]
+                # select level
+                try:
+                    ds = ds.isel(z_t=k)
+                except ValueError:
+                    pass
+                # apply mask
+                if mask is not None:
+                    ds = ds.where(mask)
+                tseries[i] = ds.reduce(reducefunc, ['nlon', 'nlat']).values
+                timevar = ds['time']
+                timeax[i] = utils.get_time_decimal_year(timevar)
+
+    # output
     if use_pandas:
         index = pd.Index(timeax, name='ModelYear')
         ts = pd.Series(tseries, index=index, name=varn)
