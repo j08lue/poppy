@@ -64,7 +64,7 @@ def get_vertical_stream_function(ds, region='Global', t=0, lat0=None, custom_mas
         j0 = np.argmin(np.abs(latax-lat0))
         latax = latax[j0]
         Vdz = np.zeros((nt,nz))
-        for k in xrange(nz):
+        for k in range(nz):
             Vdz[:,k] = np.sum((
                 _fill0(dsvar['VVEL'][t,k,j0,:]) * 1e-2
                     * imask[j0]
@@ -72,7 +72,7 @@ def get_vertical_stream_function(ds, region='Global', t=0, lat0=None, custom_mas
                     ),axis=-1) * dz[k]
     else:
         Vdz = np.zeros((nt,nz,ny))
-        for k in xrange(nz):
+        for k in range(nz):
             Vdz[:,k,:] = np.sum((
                 _fill0(dsvar['VVEL'][t,k,:,:]) * 1e-2
                     * imask
@@ -116,7 +116,7 @@ def get_barotropic_stream_function(ds,region=None,lon0=None,t=0):
         regmask = poppy.grid.get_regmasks(dsvar['REGION_MASK'][:],int)[region]
 
     V = np.zeros(lat.shape)
-    for k in xrange(len(dsvar['dz'])):
+    for k in range(len(dsvar['dz'])):
         V += (_fill0(dsvar['VVEL'][t,k]) * 1e-2
                 * dsvar['dz'][k] * 1e-2)
     V *= dsvar['DXU'][:,:] * 1e-2

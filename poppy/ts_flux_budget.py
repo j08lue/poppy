@@ -23,7 +23,7 @@ def fluxbudget_VVEL(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     dz = dsvar['dz'][:] * 1e-2
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         uflux = _fill0(dsvar['UVEL'][t,k]) * 1e-2
         uflux *= dyu
         uflux *= dz[k]
@@ -52,7 +52,7 @@ def fluxbudget_UESVNS(ds,mask,varn='salt',kza=0,kzo=None,t=0):
     tarea = dsvar['UAREA'][:] * 1e-4
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         uflux = _fill0(dsvar['UES'][t,k])
         uflux *= tarea
         uflux *= dz[k]
@@ -72,7 +72,7 @@ def fluxbudget_bolus_visop(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     dz = dsvar['dz'][:] * 1e-2
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         # get bolus velocity
         uflux = _fill0(dsvar['UISOP'][t,k]) * 1e-2 # m s-1
         vflux = _fill0(dsvar['VISOP'][t,k]) * 1e-2 # m s-1
@@ -110,7 +110,7 @@ def fluxbudget_diffusion(ds,mask,varn,kza=0,kzo=None,S0=34.8,t=0):
     dz = dsvar['dz'][:] * 1e-2
     if kzo is None: kzo = len(dz)
     fluxbudget = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         # get scalar data
         if varn == 'heat':
             scalar = _fill0(dsvar['TEMP'][t,k])
@@ -166,7 +166,7 @@ def transport_divergence(ds,mask,varn='salt',kza=0,kzo=None,t=0):
     dz = dsvar['dz'][:] * 1e-2    
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         uflux = _fill0(dsvar[uvar][t,k])
         uflux *= dyu
         uflux *= dz[k]
@@ -192,7 +192,7 @@ def transport_divergence_from_vertical(ds,mask,varn='salt',kza=0,kzo=None,t=0):
     dz = dsvar['dz'][:] * 1e-2
     if kzo is None: kzo = len(dz)
     transport_divergence = 0.
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         wflux = _fill0(dsvar[wvar][t,k][mask])
         wflux *= dz[k]
         wflux *= dsvar['TAREA'][:][mask] * 1e-4

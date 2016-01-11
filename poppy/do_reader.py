@@ -69,7 +69,7 @@ def read_do_file(fname,straits=['DS','FBC','RossSea','WeddellSea'],year=None):
 
     # separate out straits
     for key in contents:
-        for i in xrange(nstraits):
+        for i in range(nstraits):
             # take every (nstraits)th line starting from 0,1,2,3...
             ios[key][i].writelines(itertools.islice(lines[key],i,None,nstraits))
             # rewind StringIOs

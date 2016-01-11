@@ -21,7 +21,7 @@ def mean_velocity_component(ds,varn,regmask=1,kza=0,kzo=None,S0=34.8):
     dz = dsvar['dz'][:]/100.
     if kzo is None: kzo = len(dz)
     meanvel = np.zeros(regmask.shape[0])
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         if varn == 'heat':
             layer = dsvar['VNT'][0,k] # degC s-1
             layer *= dyu
@@ -50,7 +50,7 @@ def diffusion_component(ds,varn,regmask=1,kza=0,kzo=None,S0=34.8):
     dz = dsvar['dz'][:]/100.
     if kzo is None: kzo = len(dz)
     diffusion = np.zeros(regmask.shape[0])
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         layer = _fill0(dsvar['KAPPA_ISOP'][0,k]/1e4) # m2 s-1
         if varn == 'heat':
             scalar = _fill0(dsvar['TEMP'][0,k])
@@ -84,7 +84,7 @@ def bolus_velocity_component_vnt_isop(ds,varn,regmask=1,kza=0,kzo=None,S0=0):
     dz = dsvar['dz'][:]/100.
     if kzo is None: kzo = len(dz)
     bolus = np.zeros(regmask.shape[0])
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         if varn == 'heat':
             layer = dsvar['VNT_ISOP'][0,k] # degC s-1
         elif varn == 'salt':
@@ -111,7 +111,7 @@ def bolus_velocity_component_visop(ds,varn,regmask=1,kza=0,kzo=None,S0=0):
     dz = dsvar['dz'][:]/100.
     if kzo is None: kzo = len(dz)
     bolus = np.zeros(regmask.shape[0])
-    for k in xrange(kza,kzo):
+    for k in range(kza,kzo):
         layer = dsvar['VISOP'][0,k]/100.
         if varn == 'heat':
             layer *= dsvar['TEMP'][0,k]
