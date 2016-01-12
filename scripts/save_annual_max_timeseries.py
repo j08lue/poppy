@@ -28,7 +28,7 @@ def get_annual_max(files, varn, grid, region):
             files,
             varn=varn,
             grid=grid,
-            reducefunc=np.max,
+            reducefunc=np.nanmax,
             **regionlims[region])
     tssmooth = pd.rolling_max(ts, window=12, center=True)
     return tssmooth
