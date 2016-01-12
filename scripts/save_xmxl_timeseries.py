@@ -32,10 +32,6 @@ def get_annual_max_xmxl(files, region):
             **regionlims[region])
     ts /= 100.
     tssmooth = pd.rolling_max(ts, window=12, center=True)
-    #poppy.metrics._pandas_copy_meta_data(ts, tssmooth, addmeta=dict(
-    #    name = 'XMXL_'+region,
-    #    units = 'm'
-    #    ))
     return tssmooth
 
 
