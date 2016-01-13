@@ -248,7 +248,7 @@ def get_mst(ncfiles, lat0=55, component=0):
 
 
 def get_timeseries(ncfiles, varn, grid, 
-        reducefunc=np.mean, 
+        reducefunc=np.nanmean, 
         latlim=None, lonlim=None, k=0):
     """Get time series of any 2D POP field reduced by a numpy function
     
