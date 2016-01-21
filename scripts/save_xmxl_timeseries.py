@@ -12,6 +12,7 @@ regionlims = {
         'Global' : dict(lonlim=(-90,90),latlim=(-180,180)),
         'Atlantic' : dict(lonlim=(-80,40),latlim=(-70,70)),
         'PolarNorthAtlantic': dict(lonlim=(-80,60),latlim=(60,90)),
+        'NNA': dict(lonlim=(-80,60),latlim=(50,90)),
         'LabradorSea': dict(latlim=(50,60), lonlim=(-50,-40)),
         'NorthAtlantic' : dict(lonlim=(-80,20),latlim=(0,65)),
         'SubpolarNorthAtlantic': dict(lonlim=(-60,0),latlim=(40,65)),
