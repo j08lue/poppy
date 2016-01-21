@@ -36,6 +36,15 @@ you can call e.g.
 and have the files opened and ready to explore as a multi-file `xray` or `netCDF4` Dataset.
 
 
+Tests
+-----
+The tests only cover a small part of the module, but their passing indicates functionality of the most important bits. Try
+
+    git clone https://github.com/j08lue/poppy.git
+    cd poppy
+    python -m unittest discover tests
+
+
 Requirements
 ------------
 Please see the `setup.py` for dependencies.
